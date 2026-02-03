@@ -1,6 +1,6 @@
-// esto es el formulario de inicio de sesión a la aplicación de gestión de pedidos
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../widgets/input_personalizado.dart';
 
 class InicioSesionPage extends StatefulWidget {
   const InicioSesionPage({super.key});
@@ -12,176 +12,117 @@ class InicioSesionPage extends StatefulWidget {
 class _InicioSesionPage extends State<InicioSesionPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  bool _isHovering = false; // Para controlar el hover en el TextButton
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: .center,
-          children: [
-
-            SizedBox(height: 14),
-
-            Image.network("https://i.postimg.cc/9DN0WvGW/logo.png"),
-
-            Text(
-              "Gestiona todo al instante",
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w900,
-                color: Colors.black87,
+      backgroundColor: const Color(0xFFF5F5F5),
+      body: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 70.0),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              SizedBox(height: 80),
+              Image.asset(
+                'assets/images/super_pollo_logo.png',
+                width: 170,
+                fit: BoxFit.contain,
               ),
-            ),
-
-            SizedBox(height: 14),
-
-            Text(
-              "Bienvenido de nuevo !!",
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.normal,
-                color: Colors.grey,
+              Text(
+                "Gestiona todo al instante",
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.black87,
+                ),
               ),
-            ),
-
-            SizedBox(height: 14),
-
-            Text(
-              'Correo',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-                color: Colors.black87,
+              SizedBox(height: 5),
+              Text(
+                "Bienvenido de nuevo !!",
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.normal,
+                  color: Colors.grey,
+                ),
               ),
-            ),
-
-            SizedBox(height: 14),
-
-            TextFormField(
-              controller: _emailController,
-              keyboardType: TextInputType.emailAddress,
-              decoration: InputDecoration(
+              SizedBox(height: 70),
+              InputPersonalizado(
+                label: 'Correo',
                 hintText: 'Ingresa tu correo',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: Colors.grey),
-                ),
-                filled: true,
-                fillColor: Colors.grey[50],
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 14,
+                controller: TextEditingController(),
+                keyboardType: TextInputType.emailAddress,
+                isPassword: false,
+              ),
+              SizedBox(height: 50),
+              InputPersonalizado(
+                label: 'Contraseña',
+                hintText: 'Ingresa tu contraseña',
+                controller: TextEditingController(),
+                keyboardType: TextInputType.visiblePassword,
+                obscureText: true,
+                isPassword: true,
+              ),
+              SizedBox(height: 100),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    context.go("/menu_principal");
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF0F6BFF),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: Text(
+                    'INICIAR SESIÓN',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
                 ),
               ),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Por favor ingresa tu correo';
-                }
-                if (!value.contains('@')) {
-                  return 'Ingresa un correo válido';
-                }
-                return null;
-              },
-            ),
-
-            SizedBox(height: 20),
-
-            const Text(
-              'Contraseña',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-                color: Colors.black87,
-              ),
-            ),
-
-            SizedBox(height: 8),
-
-            TextFormField(
-              controller: _passwordController,
-              obscureText: true,
-              decoration: InputDecoration(
-                hintText: 'Ingrese su contraseña',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: Colors.grey),
-                ),
-                filled: true,
-                fillColor: Colors.grey[50],
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 14,
-                ),
-              ),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Por favor ingresa tu contraseña';
-                }
-                if (value.length < 6) {
-                  return 'La contraseña debe tener al menos 6 caracteres';
-                }
-                return null;
-              },
-            ),
-
-            SizedBox(height: 20),
-
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {
-                  context.go("/menu_principal");
+              SizedBox(height: 20),
+              // Aplicando el efecto hover al TextButton con hover desactivado
+              MouseRegion(
+                onEnter: (_) {
+                  setState(() {
+                    _isHovering = true; // Activamos el hover
+                  });
                 },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+                onExit: (_) {
+                  setState(() {
+                    _isHovering = false; // Desactivamos el hover
+                  });
+                },
+                child: TextButton(
+                  onPressed: () {},
+                  style: TextButton.styleFrom(
+                    foregroundColor: const Color(0xFF0F6BFF),
+                    overlayColor:
+                        Colors.transparent, // Desactivamos el hover por defecto
                   ),
-                ),
-                child:
-                Text(
-                  'INICIAR SESIÓN',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
+                  child: Text(
+                    '¿Olvidaste tu contraseña?',
+                    style: TextStyle(
+                      fontSize: 16,
+                      decoration: _isHovering
+                          ? TextDecoration.underline
+                          : TextDecoration.none, // Aplica el subrayado
+                      decorationColor: const Color(
+                        0xFF0F6BFF,
+                      ), // Color de la línea
+                    ),
                   ),
                 ),
               ),
-            ),
-
-            SizedBox(height: 20),
-
-            Center(
-              child: TextButton(
-                onPressed: () {}, 
-                style: TextButton.styleFrom(
-                  foregroundColor: Colors.blue,
-                ),
-                child: const Text(
-                  '¿Olvidaste tu contraseña?',
-                  style: TextStyle(
-                    fontSize: 16,
-                    decoration: TextDecoration.underline,
-                  ),
-                ),
-              )
-            ),
-          ],
+            ],
+          ),
         ),
       ),
-      /* floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          context.go("/menu_principal");
-        },
-        tooltip: 'Iniciar Sesión',
-        child: const Icon(Icons.arrow_outward),
-      ), */
     );
   }
 }
