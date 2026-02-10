@@ -23,7 +23,9 @@ class _PedidoResumenPage extends State<PedidoResumenPage> {
             color: Colors.black,
             size: 24,
           ),
-          onPressed: () {},
+          onPressed: () {
+            context.go("/pedido_menu");
+          },
         ),
         centerTitle: true,
         title: const Text(

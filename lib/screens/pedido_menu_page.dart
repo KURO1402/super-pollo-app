@@ -1,6 +1,8 @@
-// Esta es la parte de login
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:super_pollo_app/models/productos_model.dart';
+import 'package:super_pollo_app/services/productos_service.dart';
+import '../widgets/menu_item.dart'; 
 
 class PedidoMenuPage extends StatefulWidget {
   const PedidoMenuPage({super.key});
@@ -10,6 +12,24 @@ class PedidoMenuPage extends StatefulWidget {
 }
 
 class _PedidoMenuPage extends State<PedidoMenuPage> {
+  final ProductosService _productosService = ProductosService();
+  late Future<List<ProductoModel>> _productosList;
+
+  @override
+  void initState() {
+    super.initState();
+    _productosList = _cargaInicial();
+  }
+
+  Future<List<ProductoModel>> _cargaInicial() async {
+    try {
+      final lista = await _productosService.getProductos();
+      return lista;
+    } catch (e) {
+      throw Exception("Error al cargar productos.");
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -23,7 +43,7 @@ class _PedidoMenuPage extends State<PedidoMenuPage> {
             color: Colors.black,
             size: 24,
           ),
-          onPressed: () {},
+          onPressed: () => context.pop(),
         ),
         centerTitle: true,
         title: const Text(
@@ -68,7 +88,6 @@ class _PedidoMenuPage extends State<PedidoMenuPage> {
                     ),
                   ),
                 ),
-                
                 // Pestaña Menú (seleccionada)
                 Expanded(
                   child: Container(
@@ -89,7 +108,6 @@ class _PedidoMenuPage extends State<PedidoMenuPage> {
                     ),
                   ),
                 ),
-                
                 // Pestaña Confirmar
                 Expanded(
                   child: Container(
@@ -113,7 +131,6 @@ class _PedidoMenuPage extends State<PedidoMenuPage> {
               ],
             ),
           ),
-          
           // Contenido principal
           Expanded(
             child: Padding(
@@ -122,7 +139,6 @@ class _PedidoMenuPage extends State<PedidoMenuPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 20),
-                  
                   // Campo de búsqueda
                   Container(
                     height: 48,
@@ -146,9 +162,7 @@ class _PedidoMenuPage extends State<PedidoMenuPage> {
                       ],
                     ),
                   ),
-                  
                   const SizedBox(height: 20),
-                  
                   // Título "Todas"
                   const Text(
                     'Todas',
@@ -158,9 +172,7 @@ class _PedidoMenuPage extends State<PedidoMenuPage> {
                       color: Colors.black87,
                     ),
                   ),
-                  
                   const SizedBox(height: 12),
-                  
                   // Botones de categoría
                   Row(
                     children: [
@@ -185,9 +197,7 @@ class _PedidoMenuPage extends State<PedidoMenuPage> {
                           ),
                         ),
                       ),
-                      
                       const SizedBox(width: 12),
-                      
                       // Botón Pollos
                       Expanded(
                         child: Container(
@@ -209,9 +219,7 @@ class _PedidoMenuPage extends State<PedidoMenuPage> {
                           ),
                         ),
                       ),
-                      
                       const SizedBox(width: 12),
-                      
                       // Botón Porciones
                       Expanded(
                         child: Container(
@@ -235,64 +243,47 @@ class _PedidoMenuPage extends State<PedidoMenuPage> {
                       ),
                     ],
                   ),
-                  
                   const SizedBox(height: 20),
-                  
                   // Línea separadora
                   Container(
                     height: 1,
                     color: Colors.grey.shade300,
                   ),
-                  
                   const SizedBox(height: 16),
-                  
-                  // Lista de platillos
-                  Expanded(
-                    child: ListView(
-                      children: const [
-                        // Item 1
-                        MenuItemWidget(
-                          itemName: '1/4 de Pollo a la Brasa',
-                          description: 'Pollo + papas fritas + ensalada ...',
-                          price: 'S/ 14.00',
-                          quantity: 2,
+                  // Cargar lista de productos
+                  FutureBuilder<List<ProductoModel>>(
+                    future: _productosList,
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+                      if (snapshot.hasError) {
+                        return const Center(child: Text('Error al cargar los productos'));
+                      }
+                      if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                        return const Center(child: Text('No hay productos disponibles'));
+                      }
+
+                      final productos = snapshot.data!;
+
+                      return Expanded(
+                        child: ListView.builder(
+                          itemCount: productos.length,
+                          itemBuilder: (context, index) {
+                            final item = productos[index];
+                            return MenuItemWidget(
+                              itemName: item.nombre,
+                              description: item.descripcion,
+                              price: 'S/ ${item.precio.toStringAsFixed(2)}',
+                              quantity: 0,
+                              images: item.imagenes,
+                            );
+                          },
                         ),
-                        
-                        SizedBox(height: 16),
-                        
-                        // Item 2
-                        MenuItemWidget(
-                          itemName: '1/4 de Pollo a la Brasa',
-                          description: 'Pollo + papas fritas + ensalada ...',
-                          price: 'S/ 14.00',
-                          quantity: 1,
-                        ),
-                        
-                        SizedBox(height: 16),
-                        
-                        // Item 3
-                        MenuItemWidget(
-                          itemName: '1/4 de Pollo a la Brasa',
-                          description: 'Pollo + papas fritas + ensalada ...',
-                          price: 'S/ 14.00',
-                          quantity: 1,
-                        ),
-                        
-                        SizedBox(height: 16),
-                        
-                        // Item 4
-                        MenuItemWidget(
-                          itemName: '1/4 de Pollo a la Brasa',
-                          description: 'Pollo + papas fritas + ensalada ...',
-                          price: 'S/ 14.00',
-                          quantity: 1,
-                        ),
-                      ],
-                    ),
+                      );
+                    },
                   ),
-                  
                   const SizedBox(height: 16),
-                  
                   // Resumen del pedido
                   Container(
                     padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 0),
@@ -325,9 +316,7 @@ class _PedidoMenuPage extends State<PedidoMenuPage> {
                             ),
                           ],
                         ),
-                        
                         const SizedBox(height: 16),
-                        
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton(
@@ -361,145 +350,9 @@ class _PedidoMenuPage extends State<PedidoMenuPage> {
                       ],
                     ),
                   ),
-                  
-                  const SizedBox(height: 20),
                 ],
               ),
             ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// Widget para los items del menú
-class MenuItemWidget extends StatelessWidget {
-  final String itemName;
-  final String description;
-  final String price;
-  final int quantity;
-  
-  const MenuItemWidget({
-    super.key,
-    required this.itemName,
-    required this.description,
-    required this.price,
-    required this.quantity,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.grey.shade300, width: 1),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Nombre del platillo
-          Text(
-            itemName,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: Colors.black87,
-            ),
-          ),
-          
-          const SizedBox(height: 4),
-          
-          // Descripción
-          Text(
-            description,
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey.shade700,
-            ),
-          ),
-          
-          const SizedBox(height: 12),
-          
-          // Precio y contador
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              // Precio
-              Text(
-                price,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
-                ),
-              ),
-              
-              // Contador
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade50,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: Colors.grey.shade300, width: 1),
-                ),
-                child: Row(
-                  children: [
-                    // Botón menos
-                    Container(
-                      width: 36,
-                      height: 36,
-                      decoration: const BoxDecoration(
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Center(
-                        child: Text(
-                          '-',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black87,
-                          ),
-                        ),
-                      ),
-                    ),
-                    
-                    // Cantidad
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      child: Text(
-                        '$quantity',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
-                        ),
-                      ),
-                    ),
-                    
-                    // Botón más
-                    Container(
-                      width: 36,
-                      height: 36,
-                      decoration: const BoxDecoration(
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Center(
-                        child: Text(
-                          '+',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black87,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
           ),
         ],
       ),
