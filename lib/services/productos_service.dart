@@ -5,14 +5,13 @@ import 'package:super_pollo_app/utils/dio_backend.dart';
 class ProductosService {
   final Dio _dio = DioClient.dio;
 
-  Future<List<ProductoModel>> getProductos() async {
+  Future<List<ProductoModel>> getProductos({int? categoriaId}) async {
     try {
-      final response = await _dio.get("/productos/catalogo");
-
-      // Asegúrate de que "productos" esté presente en la respuesta
-      if (response.data["productos"] == null) {
-        return [];
-      }
+      final response = await _dio.get("/productos/catalogo", 
+        queryParameters: categoriaId != null 
+        ? {"categoria": categoriaId}
+        : null,
+      );
 
       final List listadoProductos = response.data["productos"];
       

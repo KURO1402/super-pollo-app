@@ -31,7 +31,9 @@ class _PedidoMenuPage extends State<PedidoMenuPage> {
 
   Future<List<ProductoModel>> _cargaInicial() async {
     try {
-      final lista = await _productosService.getProductos();
+      final lista = await _productosService.getProductos(
+        categoriaId: _categoriaSeleccionada,
+      );
       return lista;
     } catch (e) {
       throw Exception("Error al cargar productos.");
@@ -49,6 +51,7 @@ class _PedidoMenuPage extends State<PedidoMenuPage> {
   void _seleccionarCategoria(int? idCategoria) {
   setState(() {
     _categoriaSeleccionada = idCategoria;
+    _productosList = _cargaInicial();
   });
 }
 
