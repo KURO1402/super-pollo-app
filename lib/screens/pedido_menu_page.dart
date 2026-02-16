@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:super_pollo_app/models/categorias_model.dart';
 import 'package:super_pollo_app/models/productos_model.dart';
+import 'package:super_pollo_app/services/categorias_service.dart';
 import 'package:super_pollo_app/services/productos_service.dart';
+import 'package:super_pollo_app/widgets/button_categorias.dart';
 import '../widgets/menu_item.dart'; 
 
 class PedidoMenuPage extends StatefulWidget {
@@ -12,13 +15,18 @@ class PedidoMenuPage extends StatefulWidget {
 }
 
 class _PedidoMenuPage extends State<PedidoMenuPage> {
+  int? _categoriaSeleccionada;
   final ProductosService _productosService = ProductosService();
   late Future<List<ProductoModel>> _productosList;
+
+  final CategoriasService _categoriasService = CategoriasService();
+  late Future<List<CategoriaModel>> _categoriasList;
 
   @override
   void initState() {
     super.initState();
     _productosList = _cargaInicial();
+    _categoriasList = _cargaCategorias();
   }
 
   Future<List<ProductoModel>> _cargaInicial() async {
@@ -29,6 +37,20 @@ class _PedidoMenuPage extends State<PedidoMenuPage> {
       throw Exception("Error al cargar productos.");
     }
   }
+
+  Future<List<CategoriaModel>> _cargaCategorias() async {
+    try {
+      final lista = await _categoriasService.getCategorias();
+      return lista;
+    } catch (e) {
+      throw Exception("Error al cargar las categorias");
+    }
+  }
+  void _seleccionarCategoria(int? idCategoria) {
+  setState(() {
+    _categoriaSeleccionada = idCategoria;
+  });
+}
 
   @override
   Widget build(BuildContext context) {
@@ -174,75 +196,55 @@ class _PedidoMenuPage extends State<PedidoMenuPage> {
                   ),
                   const SizedBox(height: 12),
                   // Botones de categoría
-                  Row(
-                    children: [
-                      // Botón Todas (seleccionado)
-                      Expanded(
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 10),
-                          decoration: BoxDecoration(
-                            color: Colors.blue,
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Colors.blue, width: 1.5),
-                          ),
-                          child: const Center(
-                            child: Text(
-                              'Todas',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                                color: Colors.white,
-                              ),
+                  FutureBuilder<List<CategoriaModel>>(
+                    future: _categoriasList,
+                    builder: (context, snapshot) {
+
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const SizedBox(
+                          height: 45,
+                          child: Center(child: CircularProgressIndicator()),
+                        );
+                      }
+
+                      if (snapshot.hasError) {
+                        return const Text("Error al cargar categorías");
+                      }
+
+                      if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                        return const Text("No hay categorías");
+                      }
+
+                      final categorias = snapshot.data!;
+
+                      return SizedBox(
+                        height: 45,
+                        child: ListView(
+                          scrollDirection: Axis.horizontal,
+                          children: [
+
+                            /// BOTÓN TODAS
+                            CategoriaButtonWidget(
+                              nombre: "Todas",
+                              seleccionado: _categoriaSeleccionada == null,
+                              onTap: () => _seleccionarCategoria(null),
                             ),
-                          ),
+
+                            ...categorias.map((cat) {
+                              return CategoriaButtonWidget(
+                                nombre: cat.nombre,
+                                seleccionado:
+                                    _categoriaSeleccionada == cat.idCategoria,
+                                onTap: () =>
+                                    _seleccionarCategoria(cat.idCategoria),
+                              );
+                            }).toList(),
+                          ],
                         ),
-                      ),
-                      const SizedBox(width: 12),
-                      // Botón Pollos
-                      Expanded(
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 10),
-                          decoration: BoxDecoration(
-                            color: Colors.grey.shade100,
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Colors.transparent, width: 1.5),
-                          ),
-                          child: const Center(
-                            child: Text(
-                              'Pollos',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                                color: Colors.black87,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      // Botón Porciones
-                      Expanded(
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 10),
-                          decoration: BoxDecoration(
-                            color: Colors.grey.shade100,
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Colors.transparent, width: 1.5),
-                          ),
-                          child: const Center(
-                            child: Text(
-                              'Porciones',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                                color: Colors.black87,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
+                      );
+                    },
                   ),
+
                   const SizedBox(height: 20),
                   // Línea separadora
                   Container(
