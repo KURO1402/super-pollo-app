@@ -1,6 +1,7 @@
 // Esta es la parte de login
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../utils/token_storage.dart';
 
 class MenuPrincipalPage extends StatefulWidget {
   const MenuPrincipalPage({super.key});
@@ -10,6 +11,26 @@ class MenuPrincipalPage extends StatefulWidget {
 }
 
 class _MenuPrincipalPage extends State<MenuPrincipalPage> {
+  String nombre = "";
+  String apellido = "";
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    final data = GoRouterState.of(context).extra as Map?;
+    if (data != null) {
+      nombre = data["nombre"] ?? "";
+      apellido = data["apellido"] ?? "";
+    }
+  }
+
+  Future<void> _logout() async {
+    await TokenStorage.clearToken();
+    if (!mounted) return;
+    context.go("/");
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -21,6 +42,63 @@ class _MenuPrincipalPage extends State<MenuPrincipalPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // =========================
+                // PERFIL DE USUARIO (AGREGADO)
+                // =========================
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.grey.withOpacity(0.2),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      const CircleAvatar(
+                        radius: 24,
+                        backgroundColor: Colors.blue,
+                        child: Icon(Icons.person, color: Colors.white),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "$nombre $apellido",
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const Text(
+                              "Usuario Activo",
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.grey,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: _logout,
+                        icon: const Icon(Icons.logout, color: Colors.red),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // =========================
+                // TU CONTENIDO ORIGINAL (NO MODIFICADO)
+                // =========================
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -37,6 +115,21 @@ class _MenuPrincipalPage extends State<MenuPrincipalPage> {
                         ],
                       ),
                       child: PopupMenuButton<String>(
+                        onSelected: (value) {
+                          if (value == 'dashboard') {
+                            context.go("/menu_principal");
+                          } else if (value == 'mesas') {
+                            context.go("/gestion_mesas");
+                          } else if (value == 'pedidos') {
+                            context.go("/gestion_pedidos");
+                          } else if (value == 'reportes') {
+                            context.go("/reportes");
+                          } else if (value == 'config') {
+                            context.go("/configuracion");
+                          } else if (value == 'logout') {
+                            _logout();
+                          }
+                        },
                         itemBuilder: (context) => [
                           const PopupMenuItem(
                             value: 'dashboard',
@@ -58,6 +151,14 @@ class _MenuPrincipalPage extends State<MenuPrincipalPage> {
                             value: 'config',
                             child: Text('Configuración'),
                           ),
+                          const PopupMenuDivider(),
+                          const PopupMenuItem(
+                            value: 'logout',
+                            child: Text(
+                              'Cerrar Sesión',
+                              style: TextStyle(color: Colors.red),
+                            ),
+                          ),
                         ],
                         child: Padding(
                           padding: const EdgeInsets.symmetric(
@@ -66,10 +167,7 @@ class _MenuPrincipalPage extends State<MenuPrincipalPage> {
                           ),
                           child: Row(
                             children: [
-                              const Icon(
-                                Icons.menu,
-                                color: Colors.blue,
-                              ),
+                              const Icon(Icons.menu, color: Colors.blue),
                               const SizedBox(width: 8),
                               Text(
                                 'Menú',
@@ -437,7 +535,9 @@ class _MenuPrincipalPage extends State<MenuPrincipalPage> {
                     children: [
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 8),
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.blue.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(8),
@@ -506,7 +606,9 @@ class _MenuPrincipalPage extends State<MenuPrincipalPage> {
                     children: [
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 8),
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.blue.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(8),
@@ -575,7 +677,9 @@ class _MenuPrincipalPage extends State<MenuPrincipalPage> {
                     children: [
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 8),
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.blue.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(8),

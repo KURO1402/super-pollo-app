@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:super_pollo_app/models/productos_model.dart';
 import 'package:super_pollo_app/services/productos_service.dart';
-import '../widgets/menu_item.dart'; 
+import '../widgets/menu_item.dart';
 
 class PedidoMenuPage extends StatefulWidget {
   const PedidoMenuPage({super.key});
@@ -38,12 +38,8 @@ class _PedidoMenuPage extends State<PedidoMenuPage> {
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back,
-            color: Colors.black,
-            size: 24,
-          ),
-          onPressed: () => context.pop(),
+          icon: const Icon(Icons.arrow_back, color: Colors.black, size: 24),
+          onPressed: () => context.go("/pedido_mesas"),
         ),
         centerTitle: true,
         title: const Text(
@@ -154,10 +150,7 @@ class _PedidoMenuPage extends State<PedidoMenuPage> {
                         SizedBox(width: 12),
                         Text(
                           'Buscar platillo...',
-                          style: TextStyle(
-                            color: Colors.grey,
-                            fontSize: 16,
-                          ),
+                          style: TextStyle(color: Colors.grey, fontSize: 16),
                         ),
                       ],
                     ),
@@ -205,7 +198,10 @@ class _PedidoMenuPage extends State<PedidoMenuPage> {
                           decoration: BoxDecoration(
                             color: Colors.grey.shade100,
                             borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Colors.transparent, width: 1.5),
+                            border: Border.all(
+                              color: Colors.transparent,
+                              width: 1.5,
+                            ),
                           ),
                           child: const Center(
                             child: Text(
@@ -227,7 +223,10 @@ class _PedidoMenuPage extends State<PedidoMenuPage> {
                           decoration: BoxDecoration(
                             color: Colors.grey.shade100,
                             borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Colors.transparent, width: 1.5),
+                            border: Border.all(
+                              color: Colors.transparent,
+                              width: 1.5,
+                            ),
                           ),
                           child: const Center(
                             child: Text(
@@ -245,10 +244,7 @@ class _PedidoMenuPage extends State<PedidoMenuPage> {
                   ),
                   const SizedBox(height: 20),
                   // Línea separadora
-                  Container(
-                    height: 1,
-                    color: Colors.grey.shade300,
-                  ),
+                  Container(height: 1, color: Colors.grey.shade300),
                   const SizedBox(height: 16),
                   // Cargar lista de productos
                   FutureBuilder<List<ProductoModel>>(
@@ -258,10 +254,14 @@ class _PedidoMenuPage extends State<PedidoMenuPage> {
                         return const Center(child: CircularProgressIndicator());
                       }
                       if (snapshot.hasError) {
-                        return const Center(child: Text('Error al cargar los productos'));
+                        return const Center(
+                          child: Text('Error al cargar los productos'),
+                        );
                       }
                       if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                        return const Center(child: Text('No hay productos disponibles'));
+                        return const Center(
+                          child: Text('No hay productos disponibles'),
+                        );
                       }
 
                       final productos = snapshot.data!;
@@ -286,7 +286,10 @@ class _PedidoMenuPage extends State<PedidoMenuPage> {
                   const SizedBox(height: 16),
                   // Resumen del pedido
                   Container(
-                    padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 0),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 16,
+                      horizontal: 0,
+                    ),
                     decoration: BoxDecoration(
                       border: Border(
                         top: BorderSide(color: Colors.grey.shade300, width: 1),
