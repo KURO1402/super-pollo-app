@@ -34,13 +34,6 @@ class _InicioSesionPage extends State<InicioSesionPage> {
     'color': Colors.red,
   };
 
-  static const Map<String, dynamic> modalExito = {
-    'title': '¡Éxito!',
-    'message': 'Inicio de sesión exitoso',
-    'icon': Icons.check_circle,
-    'color': Colors.green,
-  };
-
   Future<void> _login() async {
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
@@ -99,23 +92,12 @@ class _InicioSesionPage extends State<InicioSesionPage> {
 
       if (!mounted) return;
 
-      context.showCustomModal(
-        title: modalExito['title'],
-        message: modalExito['message'],
-        icon: modalExito['icon'],
-        color: modalExito['color'],
-        isSuccess: true,
-        autoCloseDuration: const Duration(seconds: 1),
-        onClose: () {
-          if (mounted) {
-            context.go(
-              "/menu_principal",
-              extra: {
-                "nombre": response.usuario.nombreUsuario,
-                "apellido": response.usuario.apellidoUsuario,
-              },
-            );
-          }
+      // Navegar directamente al menú principal sin mostrar modal de éxito
+      context.go(
+        "/menu_principal",
+        extra: {
+          "nombre": response.usuario.nombreUsuario,
+          "apellido": response.usuario.apellidoUsuario,
         },
       );
     } catch (e) {
