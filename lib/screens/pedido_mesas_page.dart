@@ -10,7 +10,6 @@ class PedidoMesasPage extends StatefulWidget {
 }
 
 class _PedidoMesasPage extends State<PedidoMesasPage> {
-
   int _selectedFilter = 0; // 0: Todas, 1: Libres, 2: Ocupadas
   int? _selectedTable; // null: ninguna seleccionada, 1-6: mesa seleccionada
 
@@ -28,9 +27,13 @@ class _PedidoMesasPage extends State<PedidoMesasPage> {
   List<Map<String, dynamic>> get _filteredTables {
     if (_selectedFilter == 0) return _tables; // Todas
     if (_selectedFilter == 1) {
-      return _tables.where((table) => table['status'] == 'libre').toList(); // Libres
+      return _tables
+          .where((table) => table['status'] == 'libre')
+          .toList(); // Libres
     }
-    return _tables.where((table) => table['status'] == 'ocupada').toList(); // Ocupadas
+    return _tables
+        .where((table) => table['status'] == 'ocupada')
+        .toList(); // Ocupadas
   }
 
   @override
@@ -41,14 +44,13 @@ class _PedidoMesasPage extends State<PedidoMesasPage> {
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back,
-            color: Colors.black,
-            size: 24,
-          ),
+          icon: const Icon(Icons.arrow_back, color: Colors.black, size: 24),
           onPressed: () {
-            // Acción para retroceder
-            Navigator.pop(context);
+            if (GoRouter.of(context).canPop()) {
+              GoRouter.of(context).pop();
+            } else {
+              GoRouter.of(context).go('/');
+            }
           },
         ),
         centerTitle: true,
@@ -67,18 +69,15 @@ class _PedidoMesasPage extends State<PedidoMesasPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 20),
-            
+
             // Subtítulo "Seleccione una mesa"
             const Text(
               'Seleccione una mesa',
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.black87,
-              ),
+              style: TextStyle(fontSize: 16, color: Colors.black87),
             ),
-            
+
             const SizedBox(height: 8),
-            
+
             // Sala Principal (preseleccionada)
             Container(
               width: double.infinity,
@@ -86,10 +85,7 @@ class _PedidoMesasPage extends State<PedidoMesasPage> {
               decoration: BoxDecoration(
                 color: Colors.blue.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: Colors.blue,
-                  width: 1.5,
-                ),
+                border: Border.all(color: Colors.blue, width: 1.5),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -102,17 +98,13 @@ class _PedidoMesasPage extends State<PedidoMesasPage> {
                       color: Colors.blue,
                     ),
                   ),
-                  Icon(
-                    Icons.check_circle,
-                    color: Colors.blue,
-                    size: 20,
-                  ),
+                  Icon(Icons.check_circle, color: Colors.blue, size: 20),
                 ],
               ),
             ),
-            
+
             const SizedBox(height: 24),
-            
+
             // Filtros
             const Text(
               'Todas',
@@ -122,9 +114,9 @@ class _PedidoMesasPage extends State<PedidoMesasPage> {
                 color: Colors.black87,
               ),
             ),
-            
+
             const SizedBox(height: 12),
-            
+
             // Botones de filtro
             Row(
               children: [
@@ -135,9 +127,9 @@ class _PedidoMesasPage extends State<PedidoMesasPage> {
                 _buildFilterButton('Ocupadas', 2),
               ],
             ),
-            
+
             const SizedBox(height: 24),
-            
+
             // Listado de mesas
             Expanded(
               child: GridView.builder(
@@ -152,23 +144,29 @@ class _PedidoMesasPage extends State<PedidoMesasPage> {
                   final table = _filteredTables[index];
                   final isSelected = _selectedTable == table['id'];
                   final isOccupied = table['status'] == 'ocupada';
-                  
+
                   return GestureDetector(
-                    onTap: isOccupied ? null : () {
-                      setState(() {
-                        _selectedTable = table['id'];
-                      });
-                    },
+                    onTap: isOccupied
+                        ? null
+                        : () {
+                            setState(() {
+                              _selectedTable = table['id'];
+                            });
+                          },
                     child: Container(
                       decoration: BoxDecoration(
-                        color: isOccupied 
-                          ? Colors.grey.shade200 
-                          : (isSelected ? Colors.blue.withOpacity(0.1) : Colors.white),
+                        color: isOccupied
+                            ? Colors.grey.shade200
+                            : (isSelected
+                                  ? Colors.blue.withOpacity(0.1)
+                                  : Colors.white),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: isOccupied 
-                            ? Colors.grey.shade400 
-                            : (isSelected ? Colors.blue : Colors.grey.shade300),
+                          color: isOccupied
+                              ? Colors.grey.shade400
+                              : (isSelected
+                                    ? Colors.blue
+                                    : Colors.grey.shade300),
                           width: isSelected ? 2 : 1,
                         ),
                       ),
@@ -180,7 +178,9 @@ class _PedidoMesasPage extends State<PedidoMesasPage> {
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
-                              color: isOccupied ? Colors.grey.shade600 : Colors.black87,
+                              color: isOccupied
+                                  ? Colors.grey.shade600
+                                  : Colors.black87,
                             ),
                           ),
                           const SizedBox(height: 6),
@@ -188,13 +188,18 @@ class _PedidoMesasPage extends State<PedidoMesasPage> {
                             '${table['capacity']} Personas',
                             style: TextStyle(
                               fontSize: 14,
-                              color: isOccupied ? Colors.grey.shade600 : Colors.grey.shade700,
+                              color: isOccupied
+                                  ? Colors.grey.shade600
+                                  : Colors.grey.shade700,
                             ),
                           ),
                           if (isOccupied) ...[
                             const SizedBox(height: 8),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
                               decoration: BoxDecoration(
                                 color: Colors.red.withOpacity(0.1),
                                 borderRadius: BorderRadius.circular(4),
@@ -216,18 +221,22 @@ class _PedidoMesasPage extends State<PedidoMesasPage> {
                 },
               ),
             ),
-            
+
             const SizedBox(height: 24),
-            
+
             // Botón Continuar
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: _selectedTable == null ? null : () {
-                  context.go("/pedido_menu");
-                },
+                onPressed: _selectedTable == null
+                    ? null
+                    : () {
+                        context.push("/pedido_menu");
+                      },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: _selectedTable == null ? Colors.grey : Colors.blue,
+                  backgroundColor: _selectedTable == null
+                      ? Colors.grey
+                      : Colors.blue,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
@@ -250,16 +259,17 @@ class _PedidoMesasPage extends State<PedidoMesasPage> {
                 ),
               ),
             ),
-            
+
             const SizedBox(height: 20),
           ],
         ),
       ),
     );
   }
-Widget _buildFilterButton(String text, int index) {
+
+  Widget _buildFilterButton(String text, int index) {
     final isSelected = _selectedFilter == index;
-    
+
     return Expanded(
       child: GestureDetector(
         onTap: () {

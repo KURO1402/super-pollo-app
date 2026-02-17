@@ -5,7 +5,7 @@ import 'package:super_pollo_app/models/productos_model.dart';
 import 'package:super_pollo_app/services/categorias_service.dart';
 import 'package:super_pollo_app/services/productos_service.dart';
 import 'package:super_pollo_app/widgets/button_categorias.dart';
-import '../widgets/menu_item.dart'; 
+import '../widgets/menu_item.dart';
 
 class PedidoMenuPage extends StatefulWidget {
   const PedidoMenuPage({super.key});
@@ -48,12 +48,13 @@ class _PedidoMenuPage extends State<PedidoMenuPage> {
       throw Exception("Error al cargar las categorias");
     }
   }
+
   void _seleccionarCategoria(int? idCategoria) {
-  setState(() {
-    _categoriaSeleccionada = idCategoria;
-    _productosList = _cargaInicial();
-  });
-}
+    setState(() {
+      _categoriaSeleccionada = idCategoria;
+      _productosList = _cargaInicial();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -63,12 +64,10 @@ class _PedidoMenuPage extends State<PedidoMenuPage> {
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back,
-            color: Colors.black,
-            size: 24,
-          ),
-          onPressed: () => context.pop(),
+          icon: const Icon(Icons.arrow_back, color: Colors.black, size: 24),
+          onPressed: () {
+            context.pop(); // Simplificado
+          },
         ),
         centerTitle: true,
         title: const Text(
@@ -96,12 +95,12 @@ class _PedidoMenuPage extends State<PedidoMenuPage> {
                 // Pestaña Mesas
                 Expanded(
                   child: Container(
-                    decoration: BoxDecoration(
+                    decoration: const BoxDecoration(
                       border: Border(
                         bottom: BorderSide(color: Colors.transparent, width: 2),
                       ),
                     ),
-                    child: Center(
+                    child: const Center(
                       child: Text(
                         'Mesas',
                         style: TextStyle(
@@ -116,12 +115,12 @@ class _PedidoMenuPage extends State<PedidoMenuPage> {
                 // Pestaña Menú (seleccionada)
                 Expanded(
                   child: Container(
-                    decoration: BoxDecoration(
+                    decoration: const BoxDecoration(
                       border: Border(
                         bottom: BorderSide(color: Colors.blue, width: 2),
                       ),
                     ),
-                    child: Center(
+                    child: const Center(
                       child: Text(
                         'Menú',
                         style: TextStyle(
@@ -136,12 +135,12 @@ class _PedidoMenuPage extends State<PedidoMenuPage> {
                 // Pestaña Confirmar
                 Expanded(
                   child: Container(
-                    decoration: BoxDecoration(
+                    decoration: const BoxDecoration(
                       border: Border(
                         bottom: BorderSide(color: Colors.transparent, width: 2),
                       ),
                     ),
-                    child: Center(
+                    child: const Center(
                       child: Text(
                         'Confirmar',
                         style: TextStyle(
@@ -179,10 +178,7 @@ class _PedidoMenuPage extends State<PedidoMenuPage> {
                         SizedBox(width: 12),
                         Text(
                           'Buscar platillo...',
-                          style: TextStyle(
-                            color: Colors.grey,
-                            fontSize: 16,
-                          ),
+                          style: TextStyle(color: Colors.grey, fontSize: 16),
                         ),
                       ],
                     ),
@@ -202,7 +198,6 @@ class _PedidoMenuPage extends State<PedidoMenuPage> {
                   FutureBuilder<List<CategoriaModel>>(
                     future: _categoriasList,
                     builder: (context, snapshot) {
-
                       if (snapshot.connectionState == ConnectionState.waiting) {
                         return const SizedBox(
                           height: 45,
@@ -225,7 +220,6 @@ class _PedidoMenuPage extends State<PedidoMenuPage> {
                         child: ListView(
                           scrollDirection: Axis.horizontal,
                           children: [
-
                             /// BOTÓN TODAS
                             CategoriaButtonWidget(
                               nombre: "Todas",
@@ -246,14 +240,10 @@ class _PedidoMenuPage extends State<PedidoMenuPage> {
                         ),
                       );
                     },
-                  ),
-
+                  ), // ← Faltaba cerrar este FutureBuilder
                   const SizedBox(height: 20),
                   // Línea separadora
-                  Container(
-                    height: 1,
-                    color: Colors.grey.shade300,
-                  ),
+                  Container(height: 1, color: Colors.grey.shade300),
                   const SizedBox(height: 16),
                   // Cargar lista de productos
                   FutureBuilder<List<ProductoModel>>(
@@ -263,10 +253,14 @@ class _PedidoMenuPage extends State<PedidoMenuPage> {
                         return const Center(child: CircularProgressIndicator());
                       }
                       if (snapshot.hasError) {
-                        return const Center(child: Text('Error al cargar los productos'));
+                        return const Center(
+                          child: Text('Error al cargar los productos'),
+                        );
                       }
                       if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                        return const Center(child: Text('No hay productos disponibles'));
+                        return const Center(
+                          child: Text('No hay productos disponibles'),
+                        );
                       }
 
                       final productos = snapshot.data!;
@@ -291,7 +285,10 @@ class _PedidoMenuPage extends State<PedidoMenuPage> {
                   const SizedBox(height: 16),
                   // Resumen del pedido
                   Container(
-                    padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 0),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 16,
+                      horizontal: 0,
+                    ),
                     decoration: BoxDecoration(
                       border: Border(
                         top: BorderSide(color: Colors.grey.shade300, width: 1),
@@ -326,7 +323,7 @@ class _PedidoMenuPage extends State<PedidoMenuPage> {
                           width: double.infinity,
                           child: ElevatedButton(
                             onPressed: () {
-                              context.go("/pedido_resumen");
+                              context.push("/pedido_resumen");
                             },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.blue,

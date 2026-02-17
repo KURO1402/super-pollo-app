@@ -18,13 +18,13 @@ class _PedidoResumenPage extends State<PedidoResumenPage> {
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back,
-            color: Colors.black,
-            size: 24,
-          ),
+          icon: const Icon(Icons.arrow_back, color: Colors.black, size: 24),
           onPressed: () {
-            context.go("/pedido_menu");
+            if (GoRouter.of(context).canPop()) {
+              GoRouter.of(context).pop();
+            } else {
+              GoRouter.of(context).go('/');
+            }
           },
         ),
         centerTitle: true,
@@ -44,7 +44,7 @@ class _PedidoResumenPage extends State<PedidoResumenPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 20),
-              
+
               // Título Mesa
               const Text(
                 'Mesa',
@@ -54,9 +54,9 @@ class _PedidoResumenPage extends State<PedidoResumenPage> {
                   color: Colors.black87,
                 ),
               ),
-              
+
               const SizedBox(height: 12),
-              
+
               // Información de la mesa
               Container(
                 padding: const EdgeInsets.all(16),
@@ -89,10 +89,13 @@ class _PedidoResumenPage extends State<PedidoResumenPage> {
                         ),
                       ],
                     ),
-                    
+
                     // Botón Cambiar
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.blue.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(20),
@@ -110,17 +113,14 @@ class _PedidoResumenPage extends State<PedidoResumenPage> {
                   ],
                 ),
               ),
-              
+
               const SizedBox(height: 24),
-              
+
               // Línea separadora
-              Container(
-                height: 1,
-                color: Colors.grey.shade300,
-              ),
-              
+              Container(height: 1, color: Colors.grey.shade300),
+
               const SizedBox(height: 24),
-              
+
               // Título Resumen
               const Text(
                 'Resumen',
@@ -130,9 +130,9 @@ class _PedidoResumenPage extends State<PedidoResumenPage> {
                   color: Colors.black87,
                 ),
               ),
-              
+
               const SizedBox(height: 16),
-              
+
               // Item 1: Pollo
               Container(
                 padding: const EdgeInsets.all(16),
@@ -160,7 +160,10 @@ class _PedidoResumenPage extends State<PedidoResumenPage> {
                               ),
                               const SizedBox(height: 8),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 4,
+                                ),
                                 decoration: BoxDecoration(
                                   color: Colors.grey.shade100,
                                   borderRadius: BorderRadius.circular(4),
@@ -191,9 +194,9 @@ class _PedidoResumenPage extends State<PedidoResumenPage> {
                   ],
                 ),
               ),
-              
+
               const SizedBox(height: 12),
-              
+
               // Item 2: Gaseosa
               Container(
                 padding: const EdgeInsets.all(16),
@@ -221,7 +224,10 @@ class _PedidoResumenPage extends State<PedidoResumenPage> {
                               ),
                               const SizedBox(height: 8),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 4,
+                                ),
                                 decoration: BoxDecoration(
                                   color: Colors.grey.shade100,
                                   borderRadius: BorderRadius.circular(4),
@@ -252,17 +258,14 @@ class _PedidoResumenPage extends State<PedidoResumenPage> {
                   ],
                 ),
               ),
-              
+
               const SizedBox(height: 24),
-              
+
               // Línea separadora
-              Container(
-                height: 1,
-                color: Colors.grey.shade300,
-              ),
-              
+              Container(height: 1, color: Colors.grey.shade300),
+
               const SizedBox(height: 24),
-              
+
               // Título Notas para cocina
               const Text(
                 'Notas para cocina',
@@ -272,9 +275,9 @@ class _PedidoResumenPage extends State<PedidoResumenPage> {
                   color: Colors.black87,
                 ),
               ),
-              
+
               const SizedBox(height: 12),
-              
+
               // Campo de notas
               Container(
                 padding: const EdgeInsets.all(16),
@@ -288,25 +291,19 @@ class _PedidoResumenPage extends State<PedidoResumenPage> {
                   children: [
                     Text(
                       'Ej. Alergia al maní, salsa extra...',
-                      style: TextStyle(
-                        fontSize: 15,
-                        color: Colors.grey,
-                      ),
+                      style: TextStyle(fontSize: 15, color: Colors.grey),
                     ),
                   ],
                 ),
               ),
-              
+
               const SizedBox(height: 24),
-              
+
               // Línea separadora
-              Container(
-                height: 1,
-                color: Colors.grey.shade300,
-              ),
-              
+              Container(height: 1, color: Colors.grey.shade300),
+
               const SizedBox(height: 24),
-              
+
               // Desglose financiero
               Column(
                 children: [
@@ -316,10 +313,7 @@ class _PedidoResumenPage extends State<PedidoResumenPage> {
                     children: [
                       const Text(
                         'Subtotal',
-                        style: TextStyle(
-                          fontSize: 15,
-                          color: Colors.black87,
-                        ),
+                        style: TextStyle(fontSize: 15, color: Colors.black87),
                       ),
                       const Text(
                         'S/ 13.12',
@@ -331,19 +325,16 @@ class _PedidoResumenPage extends State<PedidoResumenPage> {
                       ),
                     ],
                   ),
-                  
+
                   const SizedBox(height: 8),
-                  
+
                   // Impuestos
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       const Text(
                         'impuestos (18%)',
-                        style: TextStyle(
-                          fontSize: 15,
-                          color: Colors.black87,
-                        ),
+                        style: TextStyle(fontSize: 15, color: Colors.black87),
                       ),
                       const Text(
                         'S/ 2.88',
@@ -357,17 +348,14 @@ class _PedidoResumenPage extends State<PedidoResumenPage> {
                   ),
                 ],
               ),
-              
+
               const SizedBox(height: 16),
-              
+
               // Línea separadora gruesa
-              Container(
-                height: 1,
-                color: Colors.grey.shade400,
-              ),
-              
+              Container(height: 1, color: Colors.grey.shade400),
+
               const SizedBox(height: 16),
-              
+
               // Total
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -390,34 +378,38 @@ class _PedidoResumenPage extends State<PedidoResumenPage> {
                   ),
                 ],
               ),
-              
+
               const SizedBox(height: 32),
-              
+
               // Botón Confirmar
               ElevatedButton(
-                  onPressed: () {
-                    context.go("/menu_principal");
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue, // Color de fondo
-                    foregroundColor: Colors.white, // Color del texto
-                    padding: const EdgeInsets.symmetric(vertical: 16), // Mismo padding
-                    minimumSize: const Size(double.infinity, 0), // Ancho completo
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8), // Bordes redondeados
-                    ),
-                    elevation: 0, // Sin sombra (opcional)
+                onPressed: () {
+                  context.go("/menu_principal");
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue, // Color de fondo
+                  foregroundColor: Colors.white, // Color del texto
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 16,
+                  ), // Mismo padding
+                  minimumSize: const Size(double.infinity, 0), // Ancho completo
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(
+                      8,
+                    ), // Bordes redondeados
                   ),
-                  child: const Text(
-                    'Confirmar',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
+                  elevation: 0, // Sin sombra (opcional)
+                ),
+                child: const Text(
+                  'Confirmar',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
                   ),
                 ),
-              
+              ),
+
               const SizedBox(height: 40),
             ],
           ),
