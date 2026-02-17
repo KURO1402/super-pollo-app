@@ -46,8 +46,11 @@ class _PedidoMesasPage extends State<PedidoMesasPage> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black, size: 24),
           onPressed: () {
-            // Acción para retroceder
-            context.go("/menu_principal");
+            if (GoRouter.of(context).canPop()) {
+              GoRouter.of(context).pop();
+            } else {
+              GoRouter.of(context).go('/');
+            }
           },
         ),
         centerTitle: true,
@@ -228,7 +231,7 @@ class _PedidoMesasPage extends State<PedidoMesasPage> {
                 onPressed: _selectedTable == null
                     ? null
                     : () {
-                        context.go("/pedido_menu");
+                        context.push("/pedido_menu");
                       },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: _selectedTable == null

@@ -1,5 +1,6 @@
 // Esta es la parte de login
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class ConfiguracionPage extends StatefulWidget {
   const ConfiguracionPage({super.key});
@@ -9,10 +10,9 @@ class ConfiguracionPage extends StatefulWidget {
 }
 
 class _ConfiguracionPage extends State<ConfiguracionPage> {
-
   bool _notificationsEnabled = true;
   bool _darkModeEnabled = false;
-  
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -21,12 +21,14 @@ class _ConfiguracionPage extends State<ConfiguracionPage> {
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back,
-            color: Colors.black,
-            size: 24,
-          ),
-          onPressed: () {},
+          icon: const Icon(Icons.arrow_back, color: Colors.black, size: 24),
+          onPressed: () {
+            if (GoRouter.of(context).canPop()) {
+              GoRouter.of(context).pop();
+            } else {
+              GoRouter.of(context).go('/');
+            }
+          },
         ),
         centerTitle: true,
         title: const Text(
@@ -55,11 +57,7 @@ class _ConfiguracionPage extends State<ConfiguracionPage> {
                         shape: BoxShape.circle,
                       ),
                       child: const Center(
-                        child: Icon(
-                          Icons.person,
-                          size: 40,
-                          color: Colors.blue,
-                        ),
+                        child: Icon(Icons.person, size: 40, color: Colors.blue),
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -73,7 +71,10 @@ class _ConfiguracionPage extends State<ConfiguracionPage> {
                     ),
                     const SizedBox(height: 4),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.blue.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(12),
@@ -90,9 +91,9 @@ class _ConfiguracionPage extends State<ConfiguracionPage> {
                   ],
                 ),
               ),
-              
+
               const SizedBox(height: 32),
-              
+
               const Text(
                 'Información Personal',
                 style: TextStyle(
@@ -101,9 +102,9 @@ class _ConfiguracionPage extends State<ConfiguracionPage> {
                   color: Colors.black87,
                 ),
               ),
-              
+
               const SizedBox(height: 16),
-              
+
               Container(
                 decoration: BoxDecoration(
                   color: Colors.white,
@@ -112,36 +113,24 @@ class _ConfiguracionPage extends State<ConfiguracionPage> {
                 ),
                 child: Column(
                   children: [
-                    _buildInfoField(
-                      label: 'Nombres',
-                      value: 'Carlos Roberto',
-                    ),
-                    
-                    Container(
-                      height: 1,
-                      color: Colors.grey.shade200,
-                    ),
-                    
+                    _buildInfoField(label: 'Nombres', value: 'Carlos Roberto'),
+
+                    Container(height: 1, color: Colors.grey.shade200),
+
                     _buildInfoField(
                       label: 'Apellidos',
                       value: 'Rodríguez Casas',
                     ),
-                    
-                    Container(
-                      height: 1,
-                      color: Colors.grey.shade200,
-                    ),
-                    
+
+                    Container(height: 1, color: Colors.grey.shade200),
+
                     _buildInfoField(
                       label: 'Correo Electrónico',
                       value: 'carlosrodriguez@gmail.com',
                     ),
-                    
-                    Container(
-                      height: 1,
-                      color: Colors.grey.shade200,
-                    ),
-                    
+
+                    Container(height: 1, color: Colors.grey.shade200),
+
                     _buildInfoField(
                       label: 'Teléfono',
                       value: '+51 989 765 432',
@@ -149,9 +138,9 @@ class _ConfiguracionPage extends State<ConfiguracionPage> {
                   ],
                 ),
               ),
-              
+
               const SizedBox(height: 32),
-              
+
               const Text(
                 'Preferencia y Seguridad',
                 style: TextStyle(
@@ -160,9 +149,9 @@ class _ConfiguracionPage extends State<ConfiguracionPage> {
                   color: Colors.black87,
                 ),
               ),
-              
+
               const SizedBox(height: 16),
-              
+
               Container(
                 decoration: BoxDecoration(
                   color: Colors.white,
@@ -179,12 +168,9 @@ class _ConfiguracionPage extends State<ConfiguracionPage> {
                         color: Colors.grey,
                       ),
                     ),
-                    
-                    Container(
-                      height: 1,
-                      color: Colors.grey.shade200,
-                    ),
-                    
+
+                    Container(height: 1, color: Colors.grey.shade200),
+
                     _buildPreferenceItem(
                       icon: Icons.notifications,
                       text: 'Notificaciones',
@@ -198,12 +184,9 @@ class _ConfiguracionPage extends State<ConfiguracionPage> {
                         activeColor: Colors.blue,
                       ),
                     ),
-                    
-                    Container(
-                      height: 1,
-                      color: Colors.grey.shade200,
-                    ),
-                    
+
+                    Container(height: 1, color: Colors.grey.shade200),
+
                     _buildPreferenceItem(
                       icon: Icons.dark_mode,
                       text: 'Modo Oscuro',
@@ -220,9 +203,9 @@ class _ConfiguracionPage extends State<ConfiguracionPage> {
                   ],
                 ),
               ),
-              
+
               const SizedBox(height: 32),
-              
+
               Container(
                 width: double.infinity,
                 height: 50,
@@ -234,11 +217,7 @@ class _ConfiguracionPage extends State<ConfiguracionPage> {
                 child: const Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(
-                      Icons.logout,
-                      color: Colors.red,
-                      size: 20,
-                    ),
+                    Icon(Icons.logout, color: Colors.red, size: 20),
                     SizedBox(width: 8),
                     Text(
                       'Cerrar Sesión',
@@ -251,19 +230,16 @@ class _ConfiguracionPage extends State<ConfiguracionPage> {
                   ],
                 ),
               ),
-              
+
               const SizedBox(height: 32),
-              
+
               Center(
                 child: Text(
                   'versión 1.0.0',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey.shade600,
-                  ),
+                  style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
                 ),
               ),
-              
+
               const SizedBox(height: 20),
             ],
           ),
@@ -271,11 +247,8 @@ class _ConfiguracionPage extends State<ConfiguracionPage> {
       ),
     );
   }
-  
-  Widget _buildInfoField({
-    required String label,
-    required String value,
-  }) {
+
+  Widget _buildInfoField({required String label, required String value}) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       child: Row(
@@ -296,10 +269,7 @@ class _ConfiguracionPage extends State<ConfiguracionPage> {
                 const SizedBox(height: 4),
                 Text(
                   value,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    color: Colors.black87,
-                  ),
+                  style: const TextStyle(fontSize: 16, color: Colors.black87),
                 ),
               ],
             ),
@@ -308,7 +278,7 @@ class _ConfiguracionPage extends State<ConfiguracionPage> {
       ),
     );
   }
-  
+
   // Widget para items de preferencias
   Widget _buildPreferenceItem({
     required IconData icon,
@@ -319,19 +289,12 @@ class _ConfiguracionPage extends State<ConfiguracionPage> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       child: Row(
         children: [
-          Icon(
-            icon,
-            color: Colors.blue,
-            size: 24,
-          ),
+          Icon(icon, color: Colors.blue, size: 24),
           const SizedBox(width: 16),
           Expanded(
             child: Text(
               text,
-              style: const TextStyle(
-                fontSize: 16,
-                color: Colors.black87,
-              ),
+              style: const TextStyle(fontSize: 16, color: Colors.black87),
             ),
           ),
           trailing,

@@ -39,7 +39,13 @@ class _PedidoMenuPage extends State<PedidoMenuPage> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black, size: 24),
-          onPressed: () => context.go("/pedido_mesas"),
+          onPressed: () {
+            if (GoRouter.of(context).canPop()) {
+              GoRouter.of(context).pop();
+            } else {
+              GoRouter.of(context).go('/');
+            }
+          },
         ),
         centerTitle: true,
         title: const Text(
@@ -324,7 +330,7 @@ class _PedidoMenuPage extends State<PedidoMenuPage> {
                           width: double.infinity,
                           child: ElevatedButton(
                             onPressed: () {
-                              context.go("/pedido_resumen");
+                              context.push("/pedido_resumen");
                             },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.blue,

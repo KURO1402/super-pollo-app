@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class GestionMesasPage extends StatefulWidget {
   const GestionMesasPage({super.key});
@@ -27,13 +28,13 @@ class _GestionMesasPageState extends State<GestionMesasPage> {
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back,
-            color: Colors.black,
-            size: 24,
-          ),
+          icon: const Icon(Icons.arrow_back, color: Colors.black, size: 24),
           onPressed: () {
-            Navigator.pop(context);
+            if (GoRouter.of(context).canPop()) {
+              GoRouter.of(context).pop();
+            } else {
+              GoRouter.of(context).go('/');
+            }
           },
         ),
         centerTitle: true,
@@ -62,9 +63,9 @@ class _GestionMesasPageState extends State<GestionMesasPage> {
                   color: Colors.black87,
                 ),
               ),
-              
+
               const SizedBox(height: 12),
-              
+
               // Botones de estado
               Row(
                 children: [
@@ -75,9 +76,9 @@ class _GestionMesasPageState extends State<GestionMesasPage> {
                   _buildStatusTab('Entrega', 2),
                 ],
               ),
-              
+
               const SizedBox(height: 24),
-              
+
               // Grid de mesas
               GridView.builder(
                 shrinkWrap: true,
@@ -94,18 +95,20 @@ class _GestionMesasPageState extends State<GestionMesasPage> {
                   final tableNumber = index + 1;
                   String status = 'libre';
                   Color statusColor = Colors.green;
-                  
+
                   if (tableNumber == 1 || tableNumber == 4) {
                     status = 'pendiente';
                     statusColor = Colors.orange;
-                  } else if (tableNumber == 2 || tableNumber == 5 || tableNumber == 7) {
+                  } else if (tableNumber == 2 ||
+                      tableNumber == 5 ||
+                      tableNumber == 7) {
                     status = 'en preparación';
                     statusColor = Colors.blue;
                   } else if (tableNumber == 3 || tableNumber == 6) {
                     status = 'entrega';
                     statusColor = Colors.purple;
                   }
-                  
+
                   return _buildTableCard(
                     context: context,
                     tableNumber: tableNumber,
@@ -120,11 +123,11 @@ class _GestionMesasPageState extends State<GestionMesasPage> {
       ),
     );
   }
-  
+
   // Widget para pestañas de estado
   Widget _buildStatusTab(String text, int index) {
     final isSelected = _selectedStatus == index;
-    
+
     return Expanded(
       child: GestureDetector(
         onTap: () {
@@ -156,7 +159,7 @@ class _GestionMesasPageState extends State<GestionMesasPage> {
       ),
     );
   }
-  
+
   // Widget para tarjeta de mesa
   Widget _buildTableCard({
     required BuildContext context,
@@ -209,17 +212,14 @@ class _GestionMesasPageState extends State<GestionMesasPage> {
             const SizedBox(height: 8),
             const Text(
               '4 Personas',
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey,
-              ),
+              style: TextStyle(fontSize: 14, color: Colors.grey),
             ),
           ],
         ),
       ),
     );
   }
-  
+
   // Modal/BottomSheet para detalles de la mesa
   Widget _buildTableDetailsModal(int tableNumber) {
     return DraggableScrollableSheet(
@@ -253,9 +253,9 @@ class _GestionMesasPageState extends State<GestionMesasPage> {
                       ),
                     ),
                   ),
-                  
+
                   const SizedBox(height: 20),
-                  
+
                   // Información de la mesa
                   Container(
                     padding: const EdgeInsets.all(16),
@@ -277,7 +277,10 @@ class _GestionMesasPageState extends State<GestionMesasPage> {
                         ),
                         const SizedBox(height: 8),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.blue.withOpacity(0.2),
                             borderRadius: BorderRadius.circular(20),
@@ -294,20 +297,20 @@ class _GestionMesasPageState extends State<GestionMesasPage> {
                         const SizedBox(height: 8),
                         const Text(
                           '4 Personas - Sala Principal',
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.black87,
-                          ),
+                          style: TextStyle(fontSize: 16, color: Colors.black87),
                         ),
                         const SizedBox(height: 16),
-                        
+
                         // Información del mozo
                         Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Colors.grey.shade300, width: 1),
+                            border: Border.all(
+                              color: Colors.grey.shade300,
+                              width: 1,
+                            ),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -340,7 +343,8 @@ class _GestionMesasPageState extends State<GestionMesasPage> {
                                   const SizedBox(width: 12),
                                   const Expanded(
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         Text(
                                           'Juan Pérez',
@@ -370,9 +374,9 @@ class _GestionMesasPageState extends State<GestionMesasPage> {
                       ],
                     ),
                   ),
-                  
+
                   const SizedBox(height: 20),
-                  
+
                   // Lista de pedidos
                   Container(
                     padding: const EdgeInsets.all(16),
@@ -392,32 +396,38 @@ class _GestionMesasPageState extends State<GestionMesasPage> {
                             color: Colors.black87,
                           ),
                         ),
-                        
+
                         const SizedBox(height: 12),
-                        
+
                         // Item 1
-                        _buildOrderItem('1x 1/4 de Pollo a la Brasa', 'S/ 14.00'),
-                        
-                        const SizedBox(height: 8),
-                        
-                        // Item 2
-                        _buildOrderItem('1x 1/4 de Pollo a la Brasa', 'S/ 14.00'),
-                        
-                        const SizedBox(height: 8),
-                        
-                        // Item 3
-                        _buildOrderItem('1x 1/4 de Pollo a la Brasa', 'S/ 14.00'),
-                        
-                        const SizedBox(height: 12),
-                        
-                        // Línea separadora
-                        Container(
-                          height: 1,
-                          color: Colors.grey.shade300,
+                        _buildOrderItem(
+                          '1x 1/4 de Pollo a la Brasa',
+                          'S/ 14.00',
                         ),
-                        
+
+                        const SizedBox(height: 8),
+
+                        // Item 2
+                        _buildOrderItem(
+                          '1x 1/4 de Pollo a la Brasa',
+                          'S/ 14.00',
+                        ),
+
+                        const SizedBox(height: 8),
+
+                        // Item 3
+                        _buildOrderItem(
+                          '1x 1/4 de Pollo a la Brasa',
+                          'S/ 14.00',
+                        ),
+
                         const SizedBox(height: 12),
-                        
+
+                        // Línea separadora
+                        Container(height: 1, color: Colors.grey.shade300),
+
+                        const SizedBox(height: 12),
+
                         // Subtotal
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -442,9 +452,9 @@ class _GestionMesasPageState extends State<GestionMesasPage> {
                       ],
                     ),
                   ),
-                  
+
                   const SizedBox(height: 20),
-                  
+
                   // Total
                   Container(
                     padding: const EdgeInsets.all(16),
@@ -475,9 +485,9 @@ class _GestionMesasPageState extends State<GestionMesasPage> {
                       ],
                     ),
                   ),
-                  
+
                   const SizedBox(height: 24),
-                  
+
                   // Botones de acción
                   Row(
                     children: [
@@ -508,9 +518,9 @@ class _GestionMesasPageState extends State<GestionMesasPage> {
                           ),
                         ),
                       ),
-                      
+
                       const SizedBox(width: 12),
-                      
+
                       // Botón Agregar
                       Expanded(
                         child: GestureDetector(
@@ -549,7 +559,7 @@ class _GestionMesasPageState extends State<GestionMesasPage> {
                       ),
                     ],
                   ),
-                  
+
                   const SizedBox(height: 20),
                 ],
               ),
@@ -559,7 +569,7 @@ class _GestionMesasPageState extends State<GestionMesasPage> {
       },
     );
   }
-  
+
   // Widget para item de pedido
   Widget _buildOrderItem(String itemName, String price) {
     return Container(
