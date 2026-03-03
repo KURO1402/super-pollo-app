@@ -1,22 +1,29 @@
-class MesasModel {
+class MesaModel {
   final int idMesa;
-  final int capacidadMesa;
   final int numeroMesa;
+  final String nombre;
+  final int capacidadMesa;
+  final String estadoLocal;
   final String estadoMesa;
 
-  MesasModel({
+  MesaModel({
     required this.idMesa,
-    required this.capacidadMesa,
     required this.numeroMesa,
+    required this.nombre,
+    required this.capacidadMesa,
+    required this.estadoLocal,
     required this.estadoMesa,
   });
 
-  factory MesasModel.fromJson(Map<String, dynamic> json) {
-    return MesasModel(
+  factory MesaModel.fromJson(Map<String, dynamic> json) {
+    return MesaModel(
       idMesa: json['id_mesa'],
-      capacidadMesa: json['capacidad'],
       numeroMesa: json['numero_mesa'],
-      estadoMesa: json['estado_mesa']
+      nombre: json['nombre'],
+      capacidadMesa: json['capacidad_mesa'],
+      estadoLocal: json['estado_local'],
+      estadoMesa: json['estado_mesa'],
     );
   }
 }
+
