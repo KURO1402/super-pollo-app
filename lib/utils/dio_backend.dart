@@ -2,7 +2,7 @@ import 'package:dio/dio.dart';
 
 class DioClient {
   static final Dio dio = Dio(BaseOptions(
-      baseUrl: 'http://localhost:3001/api',
+      baseUrl: 'http://10.0.2.2:3001/api', // Cambié localhost por 10.0.2.2
       headers: {'Content-Type': 'application/json'}));
 }
 
