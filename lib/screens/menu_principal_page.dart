@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:super_pollo_app/services/pusher_config.dart';
 import '../utils/token_storage.dart';
 
 class MenuPrincipalPage extends StatefulWidget {
@@ -10,13 +12,72 @@ class MenuPrincipalPage extends StatefulWidget {
 }
 
 class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
+  final PusherConfig _pusherConfig = PusherConfig();
+  String mensaje = "Esperando datos ...";
   String nombre = "";
   String apellido = "";
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Llamada simple a la configuración
+    _pusherConfig.initPusher(
+      channelName: "mi-canal",
+      eventName: "mi-evento",
+      onEventTriggered: (event) {
+        if (!mounted) return;
+        dynamic data;
+        // 1. Verificar si event.data ya es un Mapa o si es un String
+        if (event.data is String) {
+          // Si es String (como en Android/iOS a veces), lo decodificamos
+          data = jsonDecode(event.data.toString());
+        } else {
+          // Si ya es un Map (común en Web), lo usamos directamente
+          data = event.data;
+        }
+        // 2. Acceder al valor de forma segura
+        String mensajeRecibido = data['mensaje'] ?? "Sin mensaje";
+
+        setState(() {
+          mensaje = mensajeRecibido;
+        });
+
+        _mostrarAlerta(mensajeRecibido);
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    _pusherConfig.disconnect();
+    super.dispose();
+  }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     _loadUserData();
+  }
+
+  void _mostrarAlerta(String contenido) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text("¡Nuevo Evento Recibido!"),
+          content: Text("Datos recibidos: $contenido"),
+          actions: [
+            TextButton(
+              child: const Text("Cerrar"),
+              onPressed: () {
+                Navigator.of(context).pop(); // Cierra el modal
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
   void _loadUserData() {
