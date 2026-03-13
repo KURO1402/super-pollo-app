@@ -13,33 +13,34 @@ class MesaCard extends StatelessWidget {
     this.onTap,
   });
 
-  bool get _isUnavailable =>
-      mesa.estadoMesa == 'ocupada' || mesa.estadoMesa == 'reservada';
+  bool get _isUnavailable => 
+    mesa.estadoLocal == 'ocupado' || mesa.estadoMesa == 'reservada';
 
   _EstadoConfig get _estadoConfig {
-    switch (mesa.estadoMesa) {
-      case 'reservada':
-        return _EstadoConfig(
-          label: 'Reservada',
-          color: const Color(0xFFE67E22),
-          bgColor: const Color(0xFFFFF3E0),
-          icon: Icons.event_busy_rounded,
-        );
-      case 'ocupada':
-        return _EstadoConfig(
-          label: 'Ocupada',
-          color: const Color(0xFFE53935),
-          bgColor: const Color(0xFFFFEBEE),
-          icon: Icons.block_rounded,
-        );
-      default:
-        return _EstadoConfig(
-          label: 'Disponible',
-          color: const Color(0xFF2E7D32),
-          bgColor: const Color(0xFFE8F5E9),
-          icon: Icons.check_circle_outline_rounded,
-        );
+    if (mesa.estadoLocal == 'ocupado') {
+      return _EstadoConfig(
+        label: 'Ocupada',
+        color: const Color(0xFFE53935),
+        bgColor: const Color(0xFFFFEBEE),
+        icon: Icons.block_rounded,
+      );
     }
+
+    if (mesa.estadoMesa == 'reservada') {
+      return _EstadoConfig(
+        label: 'Reservada',
+        color: const Color(0xFFE67E22),
+        bgColor: const Color(0xFFFFF3E0),
+        icon: Icons.event_busy_rounded,
+      );
+    }
+
+    return _EstadoConfig(
+      label: 'Disponible',
+      color: const Color(0xFF2E7D32),
+      bgColor: const Color(0xFFE8F5E9),
+      icon: Icons.check_circle_outline_rounded,
+    );
   }
 
   @override
