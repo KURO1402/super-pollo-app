@@ -368,9 +368,9 @@ class _PedidoMesasPageState extends State<PedidoMesasPage> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: _mesasSeleccionadas.isEmpty
-                    ? null
-                    : () => context.push("/pedido_menu"),
+                onPressed: () {
+                  context.push("/pedido_menu", extra: _mesasSeleccionadas);
+                },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF1565C0),
                   disabledBackgroundColor: const Color(0xFFE0E0E0),

@@ -1,15 +1,59 @@
-// Esta es la parte de login
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:super_pollo_app/models/mesas_model.dart';
+import 'package:super_pollo_app/services/pedidos_service.dart';
 
 class PedidoResumenPage extends StatefulWidget {
-  const PedidoResumenPage({super.key});
+  final List<MesaModel> mesas;
+  final List<Map<String, dynamic>> productos;
+
+  const PedidoResumenPage({
+    super.key,
+    required this.mesas,
+    required this.productos,
+  });
 
   @override
   State<PedidoResumenPage> createState() => _PedidoResumenPage();
 }
 
 class _PedidoResumenPage extends State<PedidoResumenPage> {
+  bool _isLoading = false;
+
+  Future<void> _confirmarPedido() async {
+    setState(() => _isLoading = true);
+
+    try {
+      final pedidosService = PedidosService();
+
+      await pedidosService.insertarPedido(
+        mesas: widget.mesas.map((m) => {'idMesa': m.idMesa}).toList(),
+        productos: widget.productos,
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Pedido registrado exitosamente'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        context.go("/menu_principal");
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al registrar el pedido: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -45,68 +89,53 @@ class _PedidoResumenPage extends State<PedidoResumenPage> {
             children: [
               const SizedBox(height: 20),
 
-              // Título Mesa
+              // Mesas
               const Text(
-                'Mesa',
+                'Mesas',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                   color: Colors.black87,
                 ),
               ),
-
               const SizedBox(height: 12),
-
-              // Información de la mesa
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.grey.shade300, width: 1),
+                  border: Border.all(color: Colors.grey.shade300),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Mesa 3',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black87,
-                          ),
+                    Text(
+                      widget.mesas.map((m) => m.nombre).join(', '),
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: () => context.pop(),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          '4 Personas - Sala Principal',
+                        decoration: BoxDecoration(
+                          color: Colors.blue.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: Colors.blue),
+                        ),
+                        child: const Text(
+                          'Cambiar',
                           style: TextStyle(
                             fontSize: 14,
-                            color: Colors.grey.shade700,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.blue,
                           ),
-                        ),
-                      ],
-                    ),
-
-                    // Botón Cambiar
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.blue.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: Colors.blue, width: 1),
-                      ),
-                      child: const Text(
-                        'Cambiar',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.blue,
                         ),
                       ),
                     ),
@@ -115,13 +144,10 @@ class _PedidoResumenPage extends State<PedidoResumenPage> {
               ),
 
               const SizedBox(height: 24),
-
-              // Línea separadora
               Container(height: 1, color: Colors.grey.shade300),
-
               const SizedBox(height: 24),
 
-              // Título Resumen
+              // Resumen de productos
               const Text(
                 'Resumen',
                 style: TextStyle(
@@ -130,230 +156,43 @@ class _PedidoResumenPage extends State<PedidoResumenPage> {
                   color: Colors.black87,
                 ),
               ),
-
               const SizedBox(height: 16),
 
-              // Item 1: Pollo
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.grey.shade300, width: 1),
-                ),
-                child: Column(
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                '1x 1/4 de Pollo a la Brasa',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black87,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 4,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.grey.shade100,
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: const Text(
-                                  'Editar',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w500,
-                                    color: Colors.black87,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        const Text(
-                          'S/ 14.00',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black87,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 12),
-
-              // Item 2: Gaseosa
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.grey.shade300, width: 1),
-                ),
-                child: Column(
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                '1x Gaseosa Inka Kola Personal',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black87,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 4,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.grey.shade100,
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: const Text(
-                                  'Editar',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w500,
-                                    color: Colors.black87,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        const Text(
-                          'S/ 2.00',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black87,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 24),
-
-              // Línea separadora
-              Container(height: 1, color: Colors.grey.shade300),
-
-              const SizedBox(height: 24),
-
-              // Título Notas para cocina
-              const Text(
-                'Notas para cocina',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
-                ),
-              ),
-
-              const SizedBox(height: 12),
-
-              // Campo de notas
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.grey.shade300, width: 1),
-                ),
-                child: const Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Ej. Alergia al maní, salsa extra...',
-                      style: TextStyle(fontSize: 15, color: Colors.grey),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 24),
-
-              // Línea separadora
-              Container(height: 1, color: Colors.grey.shade300),
-
-              const SizedBox(height: 24),
-
-              // Desglose financiero
-              Column(
-                children: [
-                  // Subtotal
-                  Row(
+              ...widget.productos.map((p) {
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.grey.shade300),
+                  ),
+                  child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
-                        'Subtotal',
-                        style: TextStyle(fontSize: 15, color: Colors.black87),
+                      Text(
+                        '${p['cantidad']}x ${p['nombre'] ?? 'Producto'}',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
                       ),
-                      const Text(
-                        'S/ 13.12',
-                        style: TextStyle(
-                          fontSize: 15,
+                      Text(
+                        'S/ ${((p['precio'] ?? 0) * (p['cantidad'] ?? 0)).toStringAsFixed(2)}',
+                        style: const TextStyle(
+                          fontSize: 16,
                           fontWeight: FontWeight.bold,
                           color: Colors.black87,
                         ),
                       ),
                     ],
                   ),
+                );
+              }).toList(),
 
-                  const SizedBox(height: 8),
-
-                  // Impuestos
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'impuestos (18%)',
-                        style: TextStyle(fontSize: 15, color: Colors.black87),
-                      ),
-                      const Text(
-                        'S/ 2.88',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 16),
-
-              // Línea separadora gruesa
+              const SizedBox(height: 24),
               Container(height: 1, color: Colors.grey.shade400),
-
               const SizedBox(height: 16),
 
               // Total
@@ -368,9 +207,9 @@ class _PedidoResumenPage extends State<PedidoResumenPage> {
                       color: Colors.black87,
                     ),
                   ),
-                  const Text(
-                    'S/ 16.00',
-                    style: TextStyle(
+                  Text(
+                    'S/ ${widget.productos.fold<double>(0, (sum, p) => sum + ((p['precio'] ?? 0) * (p['cantidad'] ?? 0))).toStringAsFixed(2)}',
+                    style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                       color: Colors.black87,
@@ -382,31 +221,34 @@ class _PedidoResumenPage extends State<PedidoResumenPage> {
               const SizedBox(height: 32),
 
               // Botón Confirmar
-              ElevatedButton(
-                onPressed: () {
-                  context.go("/menu_principal");
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue, // Color de fondo
-                  foregroundColor: Colors.white, // Color del texto
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 16,
-                  ), // Mismo padding
-                  minimumSize: const Size(double.infinity, 0), // Ancho completo
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(
-                      8,
-                    ), // Bordes redondeados
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: _isLoading ? null : _confirmarPedido,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
-                  elevation: 0, // Sin sombra (opcional)
-                ),
-                child: const Text(
-                  'Confirmar',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
+                  child: _isLoading
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : const Text(
+                          'Confirmar Pedido',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                 ),
               ),
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_web_plugins/url_strategy.dart'; // ← Importar esto
+import 'package:super_pollo_app/models/mesas_model.dart';
 import 'package:super_pollo_app/screens/configuracion_page.dart';
 import 'package:super_pollo_app/screens/gestion_mesas_page.dart';
 import 'package:super_pollo_app/screens/gestion_pedidos_page.dart';
@@ -39,13 +40,18 @@ final GoRouter _router = GoRouter(
     GoRoute(
       path: '/pedido_menu',
       builder: (BuildContext context, GoRouterState state) {
-        return const PedidoMenuPage();
+        final mesas = state.extra as List<MesaModel>;
+        return PedidoMenuPage(mesasSeleccionadas: mesas);
       },
     ),
     GoRoute(
       path: '/pedido_resumen',
       builder: (BuildContext context, GoRouterState state) {
-        return const PedidoResumenPage();
+        final extra = state.extra as Map<String, dynamic>;
+        return PedidoResumenPage(
+          mesas: extra['mesas'] as List<MesaModel>,
+          productos: extra['productos'] as List<Map<String, dynamic>>,
+        );
       },
     ),
     GoRoute(

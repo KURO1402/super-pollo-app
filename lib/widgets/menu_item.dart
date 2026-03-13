@@ -6,6 +6,8 @@ class MenuItemWidget extends StatelessWidget {
   final String price;
   final int quantity;
   final List<String> images;
+  final VoidCallback onIncrementar;
+  final VoidCallback onDecrementar;
 
   const MenuItemWidget({
     super.key,
@@ -14,6 +16,8 @@ class MenuItemWidget extends StatelessWidget {
     required this.price,
     required this.quantity,
     required this.images,
+    required this.onIncrementar,
+    required this.onDecrementar,
   });
 
   @override
@@ -33,8 +37,7 @@ class MenuItemWidget extends StatelessWidget {
         ],
       ),
       child: Row(
-        // Centra verticalmente todos los elementos de la fila principal
-        crossAxisAlignment: CrossAxisAlignment.center, 
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           // 1. Imagen
           ClipRRect(
@@ -54,7 +57,7 @@ class MenuItemWidget extends StatelessWidget {
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min, // Ajusta al contenido
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   itemName,
@@ -82,7 +85,7 @@ class MenuItemWidget extends StatelessWidget {
             ),
           ),
 
-          // 3. Botón de Agregar / Contador (Centrado verticalmente por el Row)
+          // 3. Contador con callbacks
           _buildCounter(),
         ],
       ),
@@ -93,12 +96,15 @@ class MenuItemWidget extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
       decoration: BoxDecoration(
-        color: const Color(0xFFF5F5F5), // Gris muy claro de fondo
+        color: const Color(0xFFF5F5F5),
         borderRadius: BorderRadius.circular(10),
       ),
       child: Row(
         children: [
-          _buildActionButton(Icons.remove, isPrimary: false),
+          GestureDetector(
+            onTap: onDecrementar, // ← conectado
+            child: _buildActionButton(Icons.remove, isPrimary: false),
+          ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 10),
             child: Text(
@@ -109,7 +115,10 @@ class MenuItemWidget extends StatelessWidget {
               ),
             ),
           ),
-          _buildActionButton(Icons.add, isPrimary: true),
+          GestureDetector(
+            onTap: onIncrementar, // ← conectado
+            child: _buildActionButton(Icons.add, isPrimary: true),
+          ),
         ],
       ),
     );
