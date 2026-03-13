@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:super_pollo_app/models/mesas_model.dart';
+import 'package:super_pollo_app/models/mesas_response_model.dart';
+import 'package:super_pollo_app/services/mesas_service.dart';
 
 class GestionMesasPage extends StatefulWidget {
   const GestionMesasPage({super.key});
@@ -9,26 +12,115 @@ class GestionMesasPage extends StatefulWidget {
 }
 
 class _GestionMesasPageState extends State<GestionMesasPage> {
-  int _selectedStatus = 1; // 0: Pendiente, 1: En preparación, 2: Entrega
+  final MesasService _mesasService = MesasService();
 
-  void _showTableDetails(BuildContext context, int tableNumber) {
+  int _selectedFilter = 0; // 0: Todas, 1: Libres, 2: Ocupadas
+  List<MesaModel> _mesas = [];
+  bool _isLoading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarMesas();
+  }
+
+  Future<void> _cargarMesas() async {
+    try {
+      setState(() {
+        _isLoading = true;
+        _error = null;
+      });
+
+      final now = DateTime.now();
+      final fecha =
+          '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+      final hora =
+          '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
+
+      final MesasResponseModel response =
+          await _mesasService.getMesasPedido(fecha, hora);
+
+      setState(() {
+        _mesas = response.mesas;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = 'Error al cargar las mesas';
+        _isLoading = false;
+      });
+    }
+  }
+
+  List<MesaModel> get _filteredMesas {
+    switch (_selectedFilter) {
+      case 1:
+        return _mesas
+            .where((m) =>
+                m.estadoLocal == 'disponible' && m.estadoMesa != 'reservada')
+            .toList();
+      case 2:
+        return _mesas
+            .where((m) =>
+                m.estadoLocal == 'ocupado' || m.estadoMesa == 'reservada')
+            .toList();
+      default:
+        return _mesas;
+    }
+  }
+
+  bool _isUnavailable(MesaModel mesa) =>
+      mesa.estadoLocal == 'ocupado' || mesa.estadoMesa == 'reservada';
+
+  _EstadoConfig _getEstadoConfig(MesaModel mesa) {
+    if (mesa.estadoLocal == 'ocupado') {
+      return _EstadoConfig(
+        label: 'Ocupada',
+        color: const Color(0xFFE53935),
+        bgColor: const Color(0xFFFFEBEE),
+        icon: Icons.block_rounded,
+      );
+    }
+    if (mesa.estadoMesa == 'reservada') {
+      return _EstadoConfig(
+        label: 'Reservada',
+        color: const Color(0xFFE67E22),
+        bgColor: const Color(0xFFFFF3E0),
+        icon: Icons.event_busy_rounded,
+      );
+    }
+    return _EstadoConfig(
+      label: 'Disponible',
+      color: const Color(0xFF2E7D32),
+      bgColor: const Color(0xFFE8F5E9),
+      icon: Icons.check_circle_outline_rounded,
+    );
+  }
+
+  void _showTableDetails(MesaModel mesa) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => _buildTableDetailsModal(tableNumber),
+      builder: (context) => _buildTableDetailsModal(mesa),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFFAFAFA),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
+        surfaceTintColor: Colors.transparent,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black, size: 24),
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: Color(0xFF1A1A1A),
+            size: 20,
+          ),
           onPressed: () {
             if (GoRouter.of(context).canPop()) {
               GoRouter.of(context).pop();
@@ -41,117 +133,280 @@ class _GestionMesasPageState extends State<GestionMesasPage> {
         title: const Text(
           'Gestión de Mesas',
           style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: Colors.black,
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF1A1A1A),
+            letterSpacing: -0.5,
           ),
         ),
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Menú de estados
-              const SizedBox(height: 10),
-              const Text(
-                'Menú',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
+      body: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 20),
+
+            // Header
+            Row(
+              children: [
+                Container(
+                  width: 4,
+                  height: 22,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1565C0),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
                 ),
-              ),
-
-              const SizedBox(height: 12),
-
-              // Botones de estado
-              Row(
-                children: [
-                  _buildStatusTab('Pendiente', 0),
-                  const SizedBox(width: 12),
-                  _buildStatusTab('En preparación', 1),
-                  const SizedBox(width: 12),
-                  _buildStatusTab('Entrega', 2),
-                ],
-              ),
-
-              const SizedBox(height: 24),
-
-              // Grid de mesas
-              GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 16,
-                  mainAxisSpacing: 16,
-                  childAspectRatio: 1.2,
+                const SizedBox(width: 10),
+                const Text(
+                  'Estado de mesas',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF1A1A1A),
+                    letterSpacing: -0.3,
+                  ),
                 ),
-                itemCount: 8, // 8 mesas de ejemplo
-                itemBuilder: (context, index) {
-                  // Simular diferentes estados para las mesas
-                  final tableNumber = index + 1;
-                  String status = 'libre';
-                  Color statusColor = Colors.green;
+                const Spacer(),
+                // Botón refrescar
+                IconButton(
+                  onPressed: _cargarMesas,
+                  icon: const Icon(
+                    Icons.refresh_rounded,
+                    color: Color(0xFF1565C0),
+                  ),
+                ),
+              ],
+            ),
 
-                  if (tableNumber == 1 || tableNumber == 4) {
-                    status = 'pendiente';
-                    statusColor = Colors.orange;
-                  } else if (tableNumber == 2 ||
-                      tableNumber == 5 ||
-                      tableNumber == 7) {
-                    status = 'en preparación';
-                    statusColor = Colors.blue;
-                  } else if (tableNumber == 3 || tableNumber == 6) {
-                    status = 'entrega';
-                    statusColor = Colors.purple;
-                  }
+            const SizedBox(height: 16),
 
-                  return _buildTableCard(
-                    context: context,
-                    tableNumber: tableNumber,
-                    status: status,
-                    statusColor: statusColor,
-                  );
-                },
-              ),
-            ],
-          ),
+            // Filtros
+            Row(
+              children: [
+                _buildFilterButton('Todas', 0),
+                const SizedBox(width: 10),
+                _buildFilterButton('Libres', 1),
+                const SizedBox(width: 10),
+                _buildFilterButton('Ocupadas', 2),
+              ],
+            ),
+
+            const SizedBox(height: 20),
+
+            // Grid
+            Expanded(
+              child: _isLoading
+                  ? const Center(
+                      child: CircularProgressIndicator(
+                        color: Color(0xFF1565C0),
+                      ),
+                    )
+                  : _error != null
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.wifi_off_rounded,
+                                size: 48,
+                                color: Colors.grey.shade400,
+                              ),
+                              const SizedBox(height: 12),
+                              Text(
+                                _error!,
+                                style:
+                                    const TextStyle(color: Color(0xFF757575)),
+                              ),
+                              const SizedBox(height: 16),
+                              TextButton.icon(
+                                onPressed: _cargarMesas,
+                                icon: const Icon(Icons.refresh_rounded),
+                                label: const Text('Reintentar'),
+                                style: TextButton.styleFrom(
+                                  foregroundColor: const Color(0xFF1565C0),
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      : _filteredMesas.isEmpty
+                          ? Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.table_restaurant_rounded,
+                                    size: 48,
+                                    color: Colors.grey.shade300,
+                                  ),
+                                  const SizedBox(height: 12),
+                                  const Text(
+                                    'No se encontraron mesas',
+                                    style: TextStyle(color: Color(0xFF9E9E9E)),
+                                  ),
+                                ],
+                              ),
+                            )
+                          : GridView.builder(
+                              gridDelegate:
+                                  const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 2,
+                                crossAxisSpacing: 14,
+                                mainAxisSpacing: 14,
+                                childAspectRatio: 1.3,
+                              ),
+                              itemCount: _filteredMesas.length,
+                              itemBuilder: (context, index) {
+                                final mesa = _filteredMesas[index];
+                                final config = _getEstadoConfig(mesa);
+                                final unavailable = _isUnavailable(mesa);
+
+                                return GestureDetector(
+                                  onTap: () => _showTableDetails(mesa),
+                                  child: AnimatedContainer(
+                                    duration:
+                                        const Duration(milliseconds: 200),
+                                    decoration: BoxDecoration(
+                                      color: unavailable
+                                          ? const Color(0xFFF5F5F5)
+                                          : Colors.white,
+                                      borderRadius:
+                                          BorderRadius.circular(16),
+                                      border: Border.all(
+                                        color: unavailable
+                                            ? config.color.withOpacity(0.4)
+                                            : const Color(0xFFE8E8E8),
+                                        width: unavailable ? 1.5 : 1,
+                                      ),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color:
+                                              Colors.black.withOpacity(0.04),
+                                          blurRadius: 8,
+                                          offset: const Offset(0, 2),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 12, vertical: 10),
+                                      child: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          Icon(
+                                            Icons.table_restaurant_rounded,
+                                            size: 28,
+                                            color: unavailable
+                                                ? config.color
+                                                : const Color(0xFF424242),
+                                          ),
+                                          const SizedBox(height: 6),
+                                          Text(
+                                            mesa.nombre,
+                                            style: TextStyle(
+                                              fontSize: 15,
+                                              fontWeight: FontWeight.w700,
+                                              letterSpacing: -0.3,
+                                              color: unavailable
+                                                  ? const Color(0xFF1A1A1A)
+                                                  : const Color(0xFF1A1A1A),
+                                            ),
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(
+                                                Icons.person_outline_rounded,
+                                                size: 12,
+                                                color: const Color(0xFF757575),
+                                              ),
+                                              const SizedBox(width: 3),
+                                              Text(
+                                                '${mesa.capacidadMesa} personas',
+                                                style: const TextStyle(
+                                                  fontSize: 12,
+                                                  color: Color(0xFF757575),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 8),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                                horizontal: 10, vertical: 4),
+                                            decoration: BoxDecoration(
+                                              color: config.bgColor,
+                                              borderRadius:
+                                                  BorderRadius.circular(20),
+                                            ),
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Icon(config.icon,
+                                                    size: 11,
+                                                    color: config.color),
+                                                const SizedBox(width: 4),
+                                                Text(
+                                                  config.label,
+                                                  style: TextStyle(
+                                                    fontSize: 11,
+                                                    fontWeight: FontWeight.w600,
+                                                    color: config.color,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  // Widget para pestañas de estado
-  Widget _buildStatusTab(String text, int index) {
-    final isSelected = _selectedStatus == index;
-
+  Widget _buildFilterButton(String text, int index) {
+    final isSelected = _selectedFilter == index;
     return Expanded(
       child: GestureDetector(
-        onTap: () {
-          setState(() {
-            _selectedStatus = index;
-          });
-        },
-        child: Container(
-          height: 40,
+        onTap: () => setState(() => _selectedFilter = index),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          padding: const EdgeInsets.symmetric(vertical: 11),
           decoration: BoxDecoration(
-            color: isSelected ? Colors.blue : Colors.grey.shade100,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(
-              color: isSelected ? Colors.blue : Colors.transparent,
-              width: 1.5,
-            ),
+            color: isSelected
+                ? const Color(0xFF1565C0)
+                : const Color(0xFFF5F5F5),
+            borderRadius: BorderRadius.circular(10),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: const Color(0xFF1565C0).withOpacity(0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
+                    ),
+                  ]
+                : [],
           ),
           child: Center(
             child: Text(
               text,
               style: TextStyle(
                 fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: isSelected ? Colors.white : Colors.black87,
+                fontWeight: FontWeight.w600,
+                color: isSelected ? Colors.white : const Color(0xFF757575),
               ),
             ),
           ),
@@ -160,70 +415,11 @@ class _GestionMesasPageState extends State<GestionMesasPage> {
     );
   }
 
-  // Widget para tarjeta de mesa
-  Widget _buildTableCard({
-    required BuildContext context,
-    required int tableNumber,
-    required String status,
-    required Color statusColor,
-  }) {
-    return GestureDetector(
-      onTap: () => _showTableDetails(context, tableNumber),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: statusColor, width: 2),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.2),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              'Mesa $tableNumber',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: statusColor,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-              decoration: BoxDecoration(
-                color: statusColor.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text(
-                status.toUpperCase(),
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                  color: statusColor,
-                ),
-              ),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              '4 Personas',
-              style: TextStyle(fontSize: 14, color: Colors.grey),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  Widget _buildTableDetailsModal(MesaModel mesa) {
+    final config = _getEstadoConfig(mesa);
 
-  // Modal/BottomSheet para detalles de la mesa
-  Widget _buildTableDetailsModal(int tableNumber) {
     return DraggableScrollableSheet(
-      initialChildSize: 0.9,
+      initialChildSize: 0.85,
       minChildSize: 0.5,
       maxChildSize: 0.95,
       builder: (context, scrollController) {
@@ -231,8 +427,8 @@ class _GestionMesasPageState extends State<GestionMesasPage> {
           decoration: const BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(20),
-              topRight: Radius.circular(20),
+              topLeft: Radius.circular(24),
+              topRight: Radius.circular(24),
             ),
           ),
           child: SingleChildScrollView(
@@ -242,7 +438,7 @@ class _GestionMesasPageState extends State<GestionMesasPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Indicador de arrastre
+                  // Handle
                   Center(
                     child: Container(
                       width: 40,
@@ -253,199 +449,67 @@ class _GestionMesasPageState extends State<GestionMesasPage> {
                       ),
                     ),
                   ),
-
                   const SizedBox(height: 20),
 
-                  // Información de la mesa
+                  // Info mesa
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: Colors.blue.withOpacity(0.1),
+                      color: config.bgColor,
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.blue, width: 1.5),
+                      border: Border.all(
+                          color: config.color.withOpacity(0.4), width: 1.5),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          'Mesa $tableNumber',
-                          style: const TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black87,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.blue.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: const Text(
-                            'EN PREPARACIÓN',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.blue,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        const Text(
-                          '4 Personas - Sala Principal',
-                          style: TextStyle(fontSize: 16, color: Colors.black87),
-                        ),
-                        const SizedBox(height: 16),
-
-                        // Información del mozo
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(
-                              color: Colors.grey.shade300,
-                              width: 1,
-                            ),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'Mozo',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.grey,
-                                ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              mesa.nombre,
+                              style: const TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF1A1A1A),
                               ),
-                              const SizedBox(height: 8),
-                              Row(
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: config.color.withOpacity(0.15),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Container(
-                                    width: 36,
-                                    height: 36,
-                                    decoration: BoxDecoration(
-                                      color: Colors.blue.shade100,
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: const Center(
-                                      child: Icon(
-                                        Icons.person,
-                                        color: Colors.blue,
-                                        size: 18,
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  const Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          'Juan Pérez',
-                                          style: TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.black87,
-                                          ),
-                                        ),
-                                        SizedBox(height: 4),
-                                        Text(
-                                          '2 min',
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            color: Colors.green,
-                                            fontWeight: FontWeight.w500,
-                                          ),
-                                        ),
-                                      ],
+                                  Icon(config.icon,
+                                      size: 13, color: config.color),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    config.label.toUpperCase(),
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.bold,
+                                      color: config.color,
                                     ),
                                   ),
                                 ],
                               ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  // Lista de pedidos
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.grey.shade300, width: 1),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Pedidos (3)',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black87,
-                          ),
-                        ),
-
-                        const SizedBox(height: 12),
-
-                        // Item 1
-                        _buildOrderItem(
-                          '1x 1/4 de Pollo a la Brasa',
-                          'S/ 14.00',
-                        ),
-
-                        const SizedBox(height: 8),
-
-                        // Item 2
-                        _buildOrderItem(
-                          '1x 1/4 de Pollo a la Brasa',
-                          'S/ 14.00',
-                        ),
-
-                        const SizedBox(height: 8),
-
-                        // Item 3
-                        _buildOrderItem(
-                          '1x 1/4 de Pollo a la Brasa',
-                          'S/ 14.00',
-                        ),
-
-                        const SizedBox(height: 12),
-
-                        // Línea separadora
-                        Container(height: 1, color: Colors.grey.shade300),
-
-                        const SizedBox(height: 12),
-
-                        // Subtotal
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text(
-                              'Subtotal',
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: Colors.black87,
-                              ),
                             ),
-                            const Text(
-                              'S/ 42.00',
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Icon(Icons.person_outline_rounded,
+                                size: 16, color: Colors.grey.shade600),
+                            const SizedBox(width: 6),
+                            Text(
+                              '${mesa.capacidadMesa} personas',
                               style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black87,
-                              ),
+                                  fontSize: 15, color: Colors.grey.shade700),
                             ),
                           ],
                         ),
@@ -455,32 +519,56 @@ class _GestionMesasPageState extends State<GestionMesasPage> {
 
                   const SizedBox(height: 20),
 
-                  // Total
+                  // Pedidos (datos de prueba)
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: Colors.grey.shade50,
+                      color: Colors.white,
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.grey.shade300, width: 1),
+                      border: Border.all(color: Colors.grey.shade200),
                     ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Text(
-                          'Total',
+                          'Pedidos (3)',
                           style: TextStyle(
-                            fontSize: 18,
+                            fontSize: 16,
                             fontWeight: FontWeight.bold,
-                            color: Colors.black87,
+                            color: Color(0xFF1A1A1A),
                           ),
                         ),
-                        const Text(
-                          'S/ 42.00',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black87,
-                          ),
+                        const SizedBox(height: 12),
+                        _buildOrderItem('1x 1/4 de Pollo a la Brasa',
+                            'S/ 14.00'),
+                        const SizedBox(height: 8),
+                        _buildOrderItem(
+                            '2x Gaseosa Inka Kola Personal', 'S/ 4.00'),
+                        const SizedBox(height: 8),
+                        _buildOrderItem('1x Ensalada Mixta', 'S/ 8.00'),
+                        const SizedBox(height: 16),
+                        Container(height: 1, color: Colors.grey.shade200),
+                        const SizedBox(height: 12),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Total',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.grey.shade800,
+                              ),
+                            ),
+                            const Text(
+                              'S/ 26.00',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF1565C0),
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
@@ -491,25 +579,22 @@ class _GestionMesasPageState extends State<GestionMesasPage> {
                   // Botones de acción
                   Row(
                     children: [
-                      // Botón Cerrar Mesa
                       Expanded(
                         child: GestureDetector(
-                          onTap: () {
-                            Navigator.pop(context);
-                            // Acción para cerrar mesa
-                          },
+                          onTap: () => Navigator.pop(context),
                           child: Container(
                             height: 50,
                             decoration: BoxDecoration(
-                              color: Colors.red.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: Colors.red, width: 1.5),
+                              color: Colors.red.withOpacity(0.08),
+                              borderRadius: BorderRadius.circular(10),
+                              border:
+                                  Border.all(color: Colors.red, width: 1.5),
                             ),
                             child: const Center(
                               child: Text(
                                 'Cerrar Mesa',
                                 style: TextStyle(
-                                  fontSize: 16,
+                                  fontSize: 15,
                                   fontWeight: FontWeight.bold,
                                   color: Colors.red,
                                 ),
@@ -518,35 +603,26 @@ class _GestionMesasPageState extends State<GestionMesasPage> {
                           ),
                         ),
                       ),
-
                       const SizedBox(width: 12),
-
-                      // Botón Agregar
                       Expanded(
                         child: GestureDetector(
-                          onTap: () {
-                            // Acción para agregar
-                          },
+                          onTap: () => Navigator.pop(context),
                           child: Container(
                             height: 50,
                             decoration: BoxDecoration(
-                              color: Colors.blue,
-                              borderRadius: BorderRadius.circular(8),
+                              color: const Color(0xFF1565C0),
+                              borderRadius: BorderRadius.circular(10),
                             ),
                             child: const Center(
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Icon(
-                                    Icons.add,
-                                    color: Colors.white,
-                                    size: 20,
-                                  ),
+                                  Icon(Icons.add, color: Colors.white, size: 20),
                                   SizedBox(width: 8),
                                   Text(
                                     'Agregar',
                                     style: TextStyle(
-                                      fontSize: 16,
+                                      fontSize: 15,
                                       fontWeight: FontWeight.bold,
                                       color: Colors.white,
                                     ),
@@ -559,7 +635,6 @@ class _GestionMesasPageState extends State<GestionMesasPage> {
                       ),
                     ],
                   ),
-
                   const SizedBox(height: 20),
                 ],
               ),
@@ -570,7 +645,6 @@ class _GestionMesasPageState extends State<GestionMesasPage> {
     );
   }
 
-  // Widget para item de pedido
   Widget _buildOrderItem(String itemName, String price) {
     return Container(
       padding: const EdgeInsets.all(10),
@@ -586,8 +660,8 @@ class _GestionMesasPageState extends State<GestionMesasPage> {
               itemName,
               style: const TextStyle(
                 fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
+                fontWeight: FontWeight.w500,
+                color: Color(0xFF1A1A1A),
               ),
               overflow: TextOverflow.ellipsis,
             ),
@@ -597,11 +671,25 @@ class _GestionMesasPageState extends State<GestionMesasPage> {
             style: const TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.bold,
-              color: Colors.black87,
+              color: Color(0xFF1A1A1A),
             ),
           ),
         ],
       ),
     );
   }
+}
+
+class _EstadoConfig {
+  final String label;
+  final Color color;
+  final Color bgColor;
+  final IconData icon;
+
+  _EstadoConfig({
+    required this.label,
+    required this.color,
+    required this.bgColor,
+    required this.icon,
+  });
 }
