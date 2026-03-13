@@ -2,6 +2,9 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:super_pollo_app/services/pusher_config.dart';
+import 'package:super_pollo_app/services/listar_pedidos_service.dart';
+import 'package:super_pollo_app/models/listar_pedidos_model.dart';
+import 'package:super_pollo_app/widgets/pedidos_widget.dart';
 import '../utils/token_storage.dart';
 
 class MenuPrincipalPage extends StatefulWidget {
@@ -16,10 +19,13 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
   String mensaje = "Esperando datos ...";
   String nombre = "";
   String apellido = "";
+  List<Pedido> _recentOrders = [];
+  bool _isLoadingOrders = false;
 
   @override
   void initState() {
     super.initState();
+    _cargarPedidosRecientes();
 
     // Llamada simple a la configuración
     _pusherConfig.initPusher(
@@ -28,15 +34,11 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
       onEventTriggered: (event) {
         if (!mounted) return;
         dynamic data;
-        // 1. Verificar si event.data ya es un Mapa o si es un String
         if (event.data is String) {
-          // Si es String (como en Android/iOS a veces), lo decodificamos
           data = jsonDecode(event.data.toString());
         } else {
-          // Si ya es un Map (común en Web), lo usamos directamente
           data = event.data;
         }
-        // 2. Acceder al valor de forma segura
         String mensajeRecibido = data['mensaje'] ?? "Sin mensaje";
 
         setState(() {
@@ -46,6 +48,42 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
         _mostrarAlerta(mensajeRecibido);
       },
     );
+  }
+
+  /// Carga los pedidos recientes desde el backend
+  void _cargarPedidosRecientes() async {
+    setState(() {
+      _isLoadingOrders = true;
+    });
+
+    try {
+      final ahora = DateTime.now();
+      final fecha =
+          '${ahora.year}-${ahora.month.toString().padLeft(2, '0')}-${ahora.day.toString().padLeft(2, '0')}';
+      final hora =
+          '${ahora.hour.toString().padLeft(2, '0')}:${ahora.minute.toString().padLeft(2, '0')}';
+
+      final response = await PedidosService.listarPedidos(
+        fecha: fecha,
+        hora: hora,
+      );
+
+      if (mounted) {
+        setState(() {
+          if (response.ok) {
+            // Tomar solo los primeros 3 pedidos para "recientes"
+            _recentOrders = response.pedidos.take(3).toList();
+          }
+          _isLoadingOrders = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoadingOrders = false;
+        });
+      }
+    }
   }
 
   @override
@@ -71,7 +109,7 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
             TextButton(
               child: const Text("Cerrar"),
               onPressed: () {
-                Navigator.of(context).pop(); // Cierra el modal
+                Navigator.of(context).pop();
               },
             ),
           ],
@@ -98,6 +136,15 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
 
   void _navigateTo(String route) {
     context.go(route);
+  }
+
+  void _showOrderDetails(Pedido pedido) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => OrderDetailsModal(pedido: pedido),
+    );
   }
 
   @override
@@ -146,7 +193,6 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
       ),
       child: Row(
         children: [
-          // Botón de menú (hamburguesa) a la izquierda
           Container(
             decoration: BoxDecoration(
               color: Colors.blue.withOpacity(0.1),
@@ -157,13 +203,9 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
               onPressed: _showLeftMenu,
             ),
           ),
-
           const Spacer(),
-
-          // Usuario y notificaciones juntos a la derecha
           Row(
             children: [
-              // Información del usuario
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
@@ -201,8 +243,6 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
                 ],
               ),
               const SizedBox(width: 8),
-
-              // Avatar del usuario
               Container(
                 padding: const EdgeInsets.all(2),
                 decoration: BoxDecoration(
@@ -219,10 +259,7 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
                   child: Icon(Icons.person, color: Colors.blue, size: 20),
                 ),
               ),
-
               const SizedBox(width: 8),
-
-              // Notificaciones al lado del usuario
               Stack(
                 children: [
                   IconButton(
@@ -266,7 +303,6 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
     );
   }
 
-  // Menú que se desliza desde la izquierda ocupando la mitad de la pantalla
   void _showLeftMenu() {
     showDialog(
       context: context,
@@ -279,7 +315,7 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
             child: Container(
               color: Colors.transparent,
               child: GestureDetector(
-                onTap: () {}, // Evita que se cierre al tocar el menú
+                onTap: () {},
                 child: TweenAnimationBuilder<double>(
                   tween: Tween(begin: -1.0, end: 0.0),
                   duration: const Duration(milliseconds: 300),
@@ -310,7 +346,6 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
                       ),
                       child: Column(
                         children: [
-                          // Header del menú
                           Container(
                             padding: const EdgeInsets.all(20),
                             decoration: BoxDecoration(
@@ -406,8 +441,6 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
                               ],
                             ),
                           ),
-
-                          // Opciones del menú
                           Expanded(
                             child: ListView(
                               padding: const EdgeInsets.symmetric(vertical: 8),
@@ -458,14 +491,11 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
                                     context.push("/configuracion");
                                   },
                                 ),
-
                                 const Divider(
                                   height: 32,
                                   indent: 16,
                                   endIndent: 16,
                                 ),
-
-                                // Opción de cerrar sesión
                                 _buildMenuItem(
                                   icon: Icons.logout,
                                   label: 'Cerrar Sesión',
@@ -478,8 +508,6 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
                               ],
                             ),
                           ),
-
-                          // Footer del menú
                           Container(
                             padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
@@ -561,9 +589,7 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
   Widget _buildFooterIcon(IconData icon, String label) {
     return GestureDetector(
       onTap: () {
-        // Aquí puedes agregar acciones para cada opción del footer
         Navigator.pop(context);
-        // _navigateTo("/ayuda"); etc.
       },
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -821,178 +847,49 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
   }
 
   Widget _buildRecentOrdersList() {
-    return Column(
-      children: [
-        _buildOrderItem(
-          tableNumber: 'M5',
-          tableName: 'Mesa 5',
-          items: '3 items',
-          time: 'Hace 5 min',
-          amount: 'S/ 45.00',
-          status: 'En preparación',
-        ),
-        const SizedBox(height: 12),
-        _buildOrderItem(
-          tableNumber: 'M1',
-          tableName: 'Mesa 1',
-          items: '2 items',
-          time: 'Hace 3 min',
-          amount: 'S/ 24.00',
-          status: 'Entregado',
-        ),
-        const SizedBox(height: 12),
-        _buildOrderItem(
-          tableNumber: 'M8',
-          tableName: 'Mesa 8',
-          items: '5 items',
-          time: 'Hace 7 min',
-          amount: 'S/ 76.00',
-          status: 'Pendiente',
-        ),
-      ],
-    );
-  }
-
-  Widget _buildOrderItem({
-    required String tableNumber,
-    required String tableName,
-    required String items,
-    required String time,
-    required String amount,
-    required String status,
-  }) {
-    Color getStatusColor() {
-      switch (status) {
-        case 'En preparación':
-          return Colors.orange;
-        case 'Entregado':
-          return Colors.green;
-        case 'Pendiente':
-          return Colors.red;
-        default:
-          return Colors.grey;
-      }
+    if (_isLoadingOrders) {
+      return const Center(child: CircularProgressIndicator());
     }
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          // Número de mesa con diseño mejorado
-          Container(
-            width: 50,
-            height: 50,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Colors.blue.shade400, Colors.blue.shade600],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Center(
-              child: Text(
-                tableNumber,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 16),
-
-          // Información del pedido
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  tableName,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black87,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: getStatusColor().withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        status,
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: getStatusColor(),
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      items,
-                      style: TextStyle(fontSize: 13, color: Colors.grey[600]),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  time,
-                  style: TextStyle(fontSize: 12, color: Colors.grey[500]),
-                ),
-              ],
-            ),
-          ),
-
-          // Monto
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
+    if (_recentOrders.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 32),
+          child: Column(
             children: [
-              Text(
-                amount,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.green,
-                ),
+              Icon(
+                Icons.shopping_cart_outlined,
+                size: 48,
+                color: Colors.grey[400],
               ),
-              const SizedBox(height: 4),
-              Container(
-                padding: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  color: Colors.blue.withOpacity(0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.arrow_forward,
-                  color: Colors.blue,
-                  size: 16,
-                ),
+              const SizedBox(height: 16),
+              Text(
+                'No hay pedidos disponibles',
+                style: TextStyle(fontSize: 16, color: Colors.grey[600]),
               ),
             ],
           ),
-        ],
-      ),
+        ),
+      );
+    }
+
+    return Column(
+      children: [
+        for (var i = 0; i < _recentOrders.length; i++)
+          Column(
+            children: [
+              OrderCardWidget(
+                pedido: _recentOrders[i],
+                onTap: () => _showOrderDetails(_recentOrders[i]),
+              ),
+              if (i < _recentOrders.length - 1)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 16),
+                  child: Divider(height: 1, color: Color(0xFFE0E0E0)),
+                ),
+            ],
+          ),
+      ],
     );
   }
 }
