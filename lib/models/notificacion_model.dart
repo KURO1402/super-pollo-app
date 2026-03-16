@@ -1,34 +1,40 @@
 class NotificacionModel {
-  final String tipo;
+  final String tipo; // "agregar", "editar", "cancelar"
   final String titulo;
   final String contenido;
   final String nota;
-  final int? idMesa;
   final int? idPedido;
+  final List<int> mesas;
   final DateTime timestamp;
 
   NotificacionModel({
     required this.tipo,
     required this.titulo,
-    required this.contenido,
+    this.contenido = '',
     this.nota = '',
-    this.idMesa,
     this.idPedido,
+    this.mesas = const [],
     required this.timestamp,
   });
 
   factory NotificacionModel.fromJson(Map<String, dynamic> json) {
     return NotificacionModel(
-      tipo: json['tipo'] ?? 'pedido',
+      tipo: json['tipo'] ?? 'agregar',
       titulo: json['titulo'] ?? '',
-      contenido: json['contenido'] ?? '',
-      nota: json['nota'] ?? '',
-      idMesa: json['idMesa'],
-      idPedido: json['idPedido'],
+      contenido: _buildContenido(json),
+      nota: '',
+      idPedido: json['id_pedido'],
+      mesas: (json['mesas'] as List?)?.map((e) => e as int).toList() ?? [],
       timestamp: json['timestamp'] != null
           ? DateTime.parse(json['timestamp'])
           : DateTime.now(),
     );
+  }
+
+  static String _buildContenido(Map<String, dynamic> json) {
+    final mesas = json['mesas'] as List?;
+    if (mesas == null || mesas.isEmpty) return '';
+    return 'Mesas: ${mesas.join(', ')}';
   }
 
   String get tiempoRelativo {

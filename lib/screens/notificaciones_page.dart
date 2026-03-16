@@ -35,11 +35,15 @@ class _NotificacionesPage extends State<NotificacionesPage> {
     switch (_selectedFilter) {
       case 1:
         return _notifState.notificaciones
-            .where((n) => n.tipo == 'pedido')
+            .where((n) => n.tipo == 'agregar')
             .toList();
       case 2:
         return _notifState.notificaciones
-            .where((n) => n.tipo == 'pago')
+            .where((n) => n.tipo == 'editar')
+            .toList();
+      case 3:
+        return _notifState.notificaciones
+            .where((n) => n.tipo == 'cancelar')
             .toList();
       default:
         return _notifState.notificaciones;
@@ -48,22 +52,25 @@ class _NotificacionesPage extends State<NotificacionesPage> {
 
   _TipoConfig _getConfig(String tipo) {
     switch (tipo) {
-      case 'pago':
-        return _TipoConfig(
-          color: Colors.green,
-          icon: Icons.payments_outlined,
-          accion: 'Ver Recibo',
-        );
-      case 'retraso':
+      case 'editar':
         return _TipoConfig(
           color: Colors.orange,
-          icon: Icons.timer_off_outlined,
+          icon: Icons.edit_outlined,
+          label: 'Editado',
           accion: 'Ver Detalles',
         );
-      default:
+      case 'cancelar':
+        return _TipoConfig(
+          color: Colors.red,
+          icon: Icons.cancel_outlined,
+          label: 'Cancelado',
+          accion: 'Ver Detalles',
+        );
+      default: // agregar
         return _TipoConfig(
           color: Colors.blue,
           icon: Icons.receipt_long_outlined,
+          label: 'Nuevo Pedido',
           accion: 'Ver Detalles',
         );
     }
@@ -121,10 +128,12 @@ class _NotificacionesPage extends State<NotificacionesPage> {
               Row(
                 children: [
                   _buildFilterButton('Todas', 0),
-                  const SizedBox(width: 12),
-                  _buildFilterButton('Pedidos', 1),
-                  const SizedBox(width: 12),
-                  _buildFilterButton('Pagados', 2),
+                  const SizedBox(width: 8),
+                  _buildFilterButton('Nuevos', 1),
+                  const SizedBox(width: 8),
+                  _buildFilterButton('Editados', 2),
+                  const SizedBox(width: 8),
+                  _buildFilterButton('Cancelados', 3),
                 ],
               ),
 
@@ -212,7 +221,7 @@ class _NotificacionesPage extends State<NotificacionesPage> {
             child: Text(
               text,
               style: TextStyle(
-                fontSize: 14,
+                fontSize: 12,
                 fontWeight: FontWeight.w500,
                 color: isSelected ? Colors.white : Colors.black87,
               ),
@@ -240,13 +249,20 @@ class _NotificacionesPage extends State<NotificacionesPage> {
               Expanded(
                 child: Row(
                   children: [
-                    Icon(config.icon, size: 18, color: config.color),
-                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: config.color.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(config.icon, size: 16, color: config.color),
+                    ),
+                    const SizedBox(width: 10),
                     Expanded(
                       child: Text(
                         notif.titulo,
                         style: const TextStyle(
-                          fontSize: 16,
+                          fontSize: 15,
                           fontWeight: FontWeight.bold,
                           color: Colors.black87,
                         ),
@@ -255,56 +271,83 @@ class _NotificacionesPage extends State<NotificacionesPage> {
                   ],
                 ),
               ),
+              const SizedBox(width: 8),
               Text(
                 notif.tiempoRelativo,
                 style: TextStyle(
-                  fontSize: 13,
+                  fontSize: 12,
                   color: Colors.grey.shade600,
                   fontWeight: FontWeight.w500,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          Text(
-            notif.contenido,
-            style: TextStyle(fontSize: 14, color: Colors.grey.shade800),
-          ),
+
+          if (notif.contenido.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Text(
+              notif.contenido,
+              style: TextStyle(fontSize: 14, color: Colors.grey.shade700),
+            ),
+          ],
+
           if (notif.nota.isNotEmpty) ...[
             const SizedBox(height: 4),
             Text(
               'Nota: ${notif.nota}',
               style: TextStyle(
-                fontSize: 14,
+                fontSize: 13,
                 fontStyle: FontStyle.italic,
-                color: Colors.grey.shade700,
+                color: Colors.grey.shade600,
               ),
             ),
           ],
-          const SizedBox(height: 16),
-          GestureDetector(
-            onTap: () {
-              // TODO: navegar según tipo e idPedido/idMesa
-            },
-            child: Container(
-              width: double.infinity,
-              height: 36,
-              decoration: BoxDecoration(
-                color: config.color.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: config.color, width: 1.5),
-              ),
-              child: Center(
+
+          const SizedBox(height: 12),
+
+          // Badge tipo + botón acción
+          Row(
+            children: [
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: config.color.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(20),
+                ),
                 child: Text(
-                  config.accion,
+                  config.label,
                   style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
                     color: config.color,
                   ),
                 ),
               ),
-            ),
+              const Spacer(),
+              GestureDetector(
+                onTap: () {
+                  // TODO: navegar según tipo e idPedido
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 16, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: config.color.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: config.color, width: 1.5),
+                  ),
+                  child: Text(
+                    config.accion,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: config.color,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -315,11 +358,13 @@ class _NotificacionesPage extends State<NotificacionesPage> {
 class _TipoConfig {
   final Color color;
   final IconData icon;
+  final String label;
   final String accion;
 
   _TipoConfig({
     required this.color,
     required this.icon,
+    required this.label,
     required this.accion,
   });
 }

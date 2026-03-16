@@ -15,8 +15,8 @@ class NotificacionesState extends ChangeNotifier {
 
   Future<void> init() async {
     await _pusherConfig.initPusher(
-      channelName: 'mi-canal',
-      eventName: 'mi-evento',
+      channelName: 'pedidos',
+      eventName: 'pedido-creado',
       onEventTriggered: _onEvento,
     );
   }

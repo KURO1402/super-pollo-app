@@ -2,7 +2,6 @@ import 'package:pusher_channels_flutter/pusher_channels_flutter.dart';
 import 'dart:developer';
 
 class PusherConfig {
-  // Instancia única (Singleton) según la documentación oficial
   PusherChannelsFlutter pusher = PusherChannelsFlutter.getInstance();
 
   Future<void> initPusher({
@@ -12,8 +11,8 @@ class PusherConfig {
   }) async {
     try {
       await pusher.init(
-        apiKey: "a385c7398ebb66d0d5ab",
-        cluster: "sa1",
+        apiKey: "aabb9cc7a7361938a7d5",
+        cluster: "mt1",
         onConnectionStateChange: (currentState, previousState) {
           log("Conexión: $previousState -> $currentState");
         },
@@ -22,20 +21,25 @@ class PusherConfig {
         },
         onEvent: (PusherEvent event) {
           log("Evento recibido en canal general: ${event.eventName}");
-          // Solo ejecutamos el callback si es el evento que nos interesa
-          if (event.eventName == eventName) {
-            onEventTriggered(event);
-          }
         },
         onSubscriptionSucceeded: (channel, data) {
           log("Suscrito con éxito a: $channel");
         },
       );
 
-      // Suscribirse al canal específico después de inicializar
-      await pusher.subscribe(channelName: channelName);
+      await pusher.subscribe(
+        channelName: channelName,
+        onEvent: (dynamic event) {
+          if (event is PusherEvent) {
+            log("Evento en canal $channelName: ${event.eventName}");
+            if (event.eventName == eventName) {
+              onEventTriggered(event);
+            }
+          }
+        },
+      );
+
       await pusher.connect();
-      
     } catch (e) {
       log("Error al inicializar Pusher: $e");
     }
