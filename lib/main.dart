@@ -11,9 +11,12 @@ import 'package:super_pollo_app/screens/notificaciones_page.dart';
 import 'package:super_pollo_app/screens/pedido_menu_page.dart';
 import 'package:super_pollo_app/screens/pedido_mesas_page.dart';
 import 'package:super_pollo_app/screens/pedido_resumen_page.dart';
+import 'package:super_pollo_app/utils/notificaciones_state.dart';
 
-void main() {
+void main() async {
   usePathUrlStrategy(); // ← Agregar esta línea ANTES de runApp
+  WidgetsFlutterBinding.ensureInitialized();
+  await NotificacionesState().init();
   runApp(const MyApp());
 }
 

@@ -1,9 +1,8 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:super_pollo_app/services/pusher_config.dart';
 import 'package:super_pollo_app/services/listar_pedidos_service.dart';
 import 'package:super_pollo_app/models/listar_pedidos_model.dart';
+import 'package:super_pollo_app/utils/notificaciones_state.dart';
 import 'package:super_pollo_app/widgets/pedidos_widget.dart';
 import '../utils/token_storage.dart';
 
@@ -15,39 +14,18 @@ class MenuPrincipalPage extends StatefulWidget {
 }
 
 class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
-  final PusherConfig _pusherConfig = PusherConfig();
   String mensaje = "Esperando datos ...";
   String nombre = "";
   String apellido = "";
   List<Pedido> _recentOrders = [];
   bool _isLoadingOrders = false;
+  final NotificacionesState _notifState = NotificacionesState();
 
   @override
   void initState() {
     super.initState();
+    _notifState.addListener(_actualizarConteo);
     _cargarPedidosRecientes();
-
-    // Llamada simple a la configuración
-    _pusherConfig.initPusher(
-      channelName: "mi-canal",
-      eventName: "mi-evento",
-      onEventTriggered: (event) {
-        if (!mounted) return;
-        dynamic data;
-        if (event.data is String) {
-          data = jsonDecode(event.data.toString());
-        } else {
-          data = event.data;
-        }
-        String mensajeRecibido = data['mensaje'] ?? "Sin mensaje";
-
-        setState(() {
-          mensaje = mensajeRecibido;
-        });
-
-        _mostrarAlerta(mensajeRecibido);
-      },
-    );
   }
 
   /// Carga los pedidos recientes desde el backend
@@ -88,7 +66,7 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
 
   @override
   void dispose() {
-    _pusherConfig.disconnect();
+    _notifState.removeListener(_actualizarConteo);
     super.dispose();
   }
 
@@ -98,24 +76,8 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
     _loadUserData();
   }
 
-  void _mostrarAlerta(String contenido) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text("¡Nuevo Evento Recibido!"),
-          content: Text("Datos recibidos: $contenido"),
-          actions: [
-            TextButton(
-              child: const Text("Cerrar"),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        );
-      },
-    );
+  void _actualizarConteo() {
+    setState(() {});
   }
 
   void _loadUserData() {
@@ -283,9 +245,9 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
                         minWidth: 16,
                         minHeight: 16,
                       ),
-                      child: const Text(
-                        '3',
-                        style: TextStyle(
+                      child: Text(
+                        '${_notifState.conteo}',
+                        style: const TextStyle(
                           color: Colors.white,
                           fontSize: 10,
                           fontWeight: FontWeight.bold,

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:super_pollo_app/models/notificacion_model.dart';
+import 'package:super_pollo_app/utils/notificaciones_state.dart';
 
 class NotificacionesPage extends StatefulWidget {
   const NotificacionesPage({super.key});
@@ -10,38 +12,62 @@ class NotificacionesPage extends StatefulWidget {
 
 class _NotificacionesPage extends State<NotificacionesPage> {
   int _selectedFilter = 0;
+  final NotificacionesState _notifState = NotificacionesState();
 
-  final List<Map<String, dynamic>> _notifications = [
-    {
-      'title': 'Nuevo Pedido - Mesa 4',
-      'time': 'Hace 2 min',
-      'type': 'pedido',
-      'content':
-          '4 items : 2x 1/4 de Pollo a la Brasa, 2x Gaseosas Personales.',
-      'note': 'Nota: Gaseosas heladas.',
-      'action': 'Ver Detalles',
-      'color': Colors.blue,
-    },
-    {
-      'title': 'Pago Confirmado - Mesa 03',
-      'time': 'Hoy a las 20:30 PM',
-      'type': 'pago',
-      'content': 'Pago de S/24.00 recibido exitosamente vía Yape',
-      'note': '',
-      'action': 'Ver Recibo',
-      'color': Colors.green,
-    },
-    {
-      'title': 'Retraso en Cocina - Mesa 10',
-      'time': 'Hace 12 min',
-      'type': 'retraso',
-      'content':
-          '4 items : 2x 1/4 de Pollo a la Brasa, 2x Gaseosas Personales.',
-      'note': 'Nota: Gaseosas heladas.',
-      'action': 'Ver Detalles',
-      'color': Colors.orange,
-    },
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _notifState.addListener(_actualizar);
+    _notifState.limpiarConteo();
+  }
+
+  @override
+  void dispose() {
+    _notifState.removeListener(_actualizar);
+    super.dispose();
+  }
+
+  void _actualizar() => setState(() {});
+
+  void _limpiarTodo() => _notifState.limpiarTodo();
+
+  List<NotificacionModel> get _filtradas {
+    switch (_selectedFilter) {
+      case 1:
+        return _notifState.notificaciones
+            .where((n) => n.tipo == 'pedido')
+            .toList();
+      case 2:
+        return _notifState.notificaciones
+            .where((n) => n.tipo == 'pago')
+            .toList();
+      default:
+        return _notifState.notificaciones;
+    }
+  }
+
+  _TipoConfig _getConfig(String tipo) {
+    switch (tipo) {
+      case 'pago':
+        return _TipoConfig(
+          color: Colors.green,
+          icon: Icons.payments_outlined,
+          accion: 'Ver Recibo',
+        );
+      case 'retraso':
+        return _TipoConfig(
+          color: Colors.orange,
+          icon: Icons.timer_off_outlined,
+          accion: 'Ver Detalles',
+        );
+      default:
+        return _TipoConfig(
+          color: Colors.blue,
+          icon: Icons.receipt_long_outlined,
+          accion: 'Ver Detalles',
+        );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -71,9 +97,7 @@ class _NotificacionesPage extends State<NotificacionesPage> {
         ),
         actions: [
           TextButton(
-            onPressed: () {
-              // Acción para limpiar todo
-            },
+            onPressed: _limpiarTodo,
             child: const Text(
               'Limpiar todo',
               style: TextStyle(
@@ -92,6 +116,8 @@ class _NotificacionesPage extends State<NotificacionesPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 10),
+
+              // Filtros
               Row(
                 children: [
                   _buildFilterButton('Todas', 0),
@@ -101,9 +127,11 @@ class _NotificacionesPage extends State<NotificacionesPage> {
                   _buildFilterButton('Pagados', 2),
                 ],
               ),
+
               const SizedBox(height: 24),
               Container(height: 1, color: Colors.grey.shade300),
               const SizedBox(height: 16),
+
               const Text(
                 'Hoy',
                 style: TextStyle(
@@ -115,21 +143,48 @@ class _NotificacionesPage extends State<NotificacionesPage> {
               const SizedBox(height: 8),
               Container(height: 1, color: Colors.grey.shade300),
               const SizedBox(height: 16),
-              Column(
-                children: _notifications.map((notification) {
-                  return Column(
-                    children: [
-                      _buildNotificationCard(notification),
-                      if (_notifications.indexOf(notification) <
-                          _notifications.length - 1)
-                        const Padding(
-                          padding: EdgeInsets.symmetric(vertical: 16),
-                          child: Divider(height: 1, color: Color(0xFFE0E0E0)),
+
+              // Lista de notificaciones
+              _filtradas.isEmpty
+                  ? Center(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 40),
+                        child: Column(
+                          children: [
+                            Icon(
+                              Icons.notifications_off_outlined,
+                              size: 48,
+                              color: Colors.grey.shade300,
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              'No hay notificaciones',
+                              style: TextStyle(color: Colors.grey.shade500),
+                            ),
+                          ],
                         ),
-                    ],
-                  );
-                }).toList(),
-              ),
+                      ),
+                    )
+                  : Column(
+                      children: _filtradas.asMap().entries.map((entry) {
+                        final index = entry.key;
+                        final notif = entry.value;
+                        return Column(
+                          children: [
+                            _buildNotificationCard(notif),
+                            if (index < _filtradas.length - 1)
+                              const Padding(
+                                padding: EdgeInsets.symmetric(vertical: 16),
+                                child: Divider(
+                                  height: 1,
+                                  color: Color(0xFFE0E0E0),
+                                ),
+                              ),
+                          ],
+                        );
+                      }).toList(),
+                    ),
+
               const SizedBox(height: 20),
             ],
           ),
@@ -142,11 +197,7 @@ class _NotificacionesPage extends State<NotificacionesPage> {
     final isSelected = _selectedFilter == index;
     return Expanded(
       child: GestureDetector(
-        onTap: () {
-          setState(() {
-            _selectedFilter = index;
-          });
-        },
+        onTap: () => setState(() => _selectedFilter = index),
         child: Container(
           height: 36,
           decoration: BoxDecoration(
@@ -172,7 +223,9 @@ class _NotificacionesPage extends State<NotificacionesPage> {
     );
   }
 
-  Widget _buildNotificationCard(Map<String, dynamic> notification) {
+  Widget _buildNotificationCard(NotificacionModel notif) {
+    final config = _getConfig(notif.tipo);
+
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -185,17 +238,25 @@ class _NotificacionesPage extends State<NotificacionesPage> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Expanded(
-                child: Text(
-                  notification['title'],
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                  ),
+                child: Row(
+                  children: [
+                    Icon(config.icon, size: 18, color: config.color),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        notif.titulo,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
               Text(
-                notification['time'],
+                notif.tiempoRelativo,
                 style: TextStyle(
                   fontSize: 13,
                   color: Colors.grey.shade600,
@@ -206,13 +267,13 @@ class _NotificacionesPage extends State<NotificacionesPage> {
           ),
           const SizedBox(height: 12),
           Text(
-            notification['content'],
+            notif.contenido,
             style: TextStyle(fontSize: 14, color: Colors.grey.shade800),
           ),
-          if (notification['note'].isNotEmpty) ...[
+          if (notif.nota.isNotEmpty) ...[
             const SizedBox(height: 4),
             Text(
-              notification['note'],
+              'Nota: ${notif.nota}',
               style: TextStyle(
                 fontSize: 14,
                 fontStyle: FontStyle.italic,
@@ -221,21 +282,26 @@ class _NotificacionesPage extends State<NotificacionesPage> {
             ),
           ],
           const SizedBox(height: 16),
-          Container(
-            width: double.infinity,
-            height: 36,
-            decoration: BoxDecoration(
-              color: notification['color'].withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: notification['color'], width: 1.5),
-            ),
-            child: Center(
-              child: Text(
-                notification['action'],
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: notification['color'],
+          GestureDetector(
+            onTap: () {
+              // TODO: navegar según tipo e idPedido/idMesa
+            },
+            child: Container(
+              width: double.infinity,
+              height: 36,
+              decoration: BoxDecoration(
+                color: config.color.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: config.color, width: 1.5),
+              ),
+              child: Center(
+                child: Text(
+                  config.accion,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: config.color,
+                  ),
                 ),
               ),
             ),
@@ -244,4 +310,16 @@ class _NotificacionesPage extends State<NotificacionesPage> {
       ),
     );
   }
+}
+
+class _TipoConfig {
+  final Color color;
+  final IconData icon;
+  final String accion;
+
+  _TipoConfig({
+    required this.color,
+    required this.icon,
+    required this.accion,
+  });
 }
