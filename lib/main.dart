@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:flutter_web_plugins/url_strategy.dart'; // ← Importar esto
 import 'package:super_pollo_app/models/mesas_model.dart';
 import 'package:super_pollo_app/screens/configuracion_page.dart';
 import 'package:super_pollo_app/screens/gestion_mesas_page.dart';
@@ -13,14 +12,10 @@ import 'package:super_pollo_app/screens/pedido_mesas_page.dart';
 import 'package:super_pollo_app/screens/pedido_resumen_page.dart';
 import 'package:super_pollo_app/utils/notificaciones_state.dart';
 
-void main() async {
-  usePathUrlStrategy(); // ← Agregar esta línea ANTES de runApp
-  WidgetsFlutterBinding.ensureInitialized();
-  await NotificacionesState().init();
-  runApp(const MyApp());
-}
+final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey =
+    GlobalKey<ScaffoldMessengerState>();
 
-final GoRouter _router = GoRouter(
+final GoRouter router = GoRouter(
   routes: <RouteBase>[
     GoRoute(
       path: '/',
@@ -84,6 +79,12 @@ final GoRouter _router = GoRouter(
   ],
 );
 
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await NotificacionesState().init();
+  runApp(const MyApp());
+}
+
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -91,7 +92,8 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp.router(
       debugShowCheckedModeBanner: false,
-      routerConfig: _router,
+      scaffoldMessengerKey: scaffoldMessengerKey,
+      routerConfig: router,
     );
   }
 }

@@ -3,6 +3,7 @@ import 'package:pusher_channels_flutter/pusher_channels_flutter.dart';
 import 'dart:convert';
 import 'package:super_pollo_app/models/notificacion_model.dart';
 import 'package:super_pollo_app/services/pusher_config.dart';
+import 'package:super_pollo_app/utils/notificacion_banner.dart';
 
 class NotificacionesState extends ChangeNotifier {
   static final NotificacionesState _instance = NotificacionesState._internal();
@@ -35,6 +36,9 @@ class NotificacionesState extends ChangeNotifier {
       notificaciones.insert(0, notif);
       conteo++;
       notifyListeners();
+      print("antes del banner");
+      NotificacionBanner.mostrar(notif);
+      print("despues del banner");
     } catch (e) {
       debugPrint('Error: $e');
     }
