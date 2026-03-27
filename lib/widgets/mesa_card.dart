@@ -13,8 +13,8 @@ class MesaCard extends StatelessWidget {
     this.onTap,
   });
 
-  bool get _isUnavailable => 
-    mesa.estadoLocal == 'ocupado' || mesa.estadoMesa == 'reservada';
+  bool get _isUnavailable =>
+      mesa.estadoLocal == 'ocupado' || mesa.estadoMesa == 'reservada';
 
   _EstadoConfig get _estadoConfig {
     if (mesa.estadoLocal == 'ocupado') {
@@ -56,14 +56,15 @@ class MesaCard extends StatelessWidget {
           color: isSelected
               ? const Color(0xFF1565C0).withOpacity(0.06)
               : _isUnavailable
-              ? const Color(0xFFF5F5F5)
+              ? config
+                    .bgColor // ← fondo del color del estado
               : Colors.white,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isSelected
                 ? const Color(0xFF1565C0)
                 : _isUnavailable
-                ? const Color(0xFFE0E0E0)
+                ? config.color.withOpacity(0.4) // ← borde del color del estado
                 : const Color(0xFFE8E8E8),
             width: isSelected ? 2 : 1,
           ),
@@ -94,7 +95,8 @@ class MesaCard extends StatelessWidget {
                 color: isSelected
                     ? const Color(0xFF1565C0)
                     : _isUnavailable
-                    ? const Color(0xFFBDBDBD)
+                    ? config
+                          .color // ← ícono del color del estado
                     : const Color(0xFF424242),
               ),
               const SizedBox(height: 6),
@@ -105,7 +107,8 @@ class MesaCard extends StatelessWidget {
                   fontWeight: FontWeight.w700,
                   letterSpacing: -0.3,
                   color: _isUnavailable
-                      ? const Color(0xFF9E9E9E)
+                      ? config
+                            .color // ← nombre del color del estado
                       : const Color(0xFF1A1A1A),
                 ),
               ),
@@ -118,7 +121,9 @@ class MesaCard extends StatelessWidget {
                     Icons.person_outline_rounded,
                     size: 12,
                     color: _isUnavailable
-                        ? const Color(0xFFBDBDBD)
+                        ? config.color.withOpacity(
+                            0.6,
+                          ) // ← ícono persona del color del estado
                         : const Color(0xFF757575),
                   ),
                   const SizedBox(width: 3),
@@ -127,7 +132,9 @@ class MesaCard extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 12,
                       color: _isUnavailable
-                          ? const Color(0xFFBDBDBD)
+                          ? config.color.withOpacity(
+                              0.6,
+                            ) // ← texto personas del color del estado
                           : const Color(0xFF757575),
                     ),
                   ),
@@ -140,7 +147,9 @@ class MesaCard extends StatelessWidget {
                   vertical: 4,
                 ),
                 decoration: BoxDecoration(
-                  color: config.bgColor,
+                  color: config.color.withOpacity(
+                    0.15,
+                  ), // ← badge más visible sobre el fondo coloreado
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Row(

@@ -436,15 +436,6 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
                                   },
                                 ),
                                 _buildMenuItem(
-                                  icon: Icons.bar_chart,
-                                  label: 'Reportes',
-                                  color: Colors.purple,
-                                  onTap: () {
-                                    Navigator.pop(context);
-                                    _navigateTo("/reportes");
-                                  },
-                                ),
-                                _buildMenuItem(
                                   icon: Icons.settings,
                                   label: 'Configuración',
                                   color: Colors.grey[700]!,

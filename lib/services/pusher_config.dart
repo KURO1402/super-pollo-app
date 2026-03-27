@@ -6,7 +6,7 @@ class PusherConfig {
 
   Future<void> initPusher({
     required String channelName,
-    required String eventName,
+    required List<String> eventNames,
     required Function(PusherEvent) onEventTriggered,
   }) async {
     try {
@@ -32,7 +32,8 @@ class PusherConfig {
         onEvent: (dynamic event) {
           if (event is PusherEvent) {
             log("Evento en canal $channelName: ${event.eventName}");
-            if (event.eventName == eventName) {
+            if (eventNames.contains(event.eventName)) {
+              // ← verifica si está en la lista
               onEventTriggered(event);
             }
           }
