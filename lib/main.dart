@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:super_pollo_app/models/mesas_model.dart';
 import 'package:super_pollo_app/screens/configuracion_page.dart';
 import 'package:super_pollo_app/screens/gestion_mesas_page.dart';
 import 'package:super_pollo_app/screens/gestion_pedidos_page.dart';
@@ -10,6 +9,7 @@ import 'package:super_pollo_app/screens/notificaciones_page.dart';
 import 'package:super_pollo_app/screens/pedido_menu_page.dart';
 import 'package:super_pollo_app/screens/pedido_mesas_page.dart';
 import 'package:super_pollo_app/screens/pedido_resumen_page.dart';
+import 'package:super_pollo_app/state/pedido_flow_state.dart';
 import 'package:super_pollo_app/utils/notificaciones_state.dart';
 
 final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey =
@@ -29,29 +29,29 @@ final GoRouter router = GoRouter(
         return const MenuPrincipalPage();
       },
     ),
+
     GoRoute(
       path: '/pedido_mesas',
       builder: (BuildContext context, GoRouterState state) {
-        return const PedidoMesasPage();
+        final flowState = state.extra as PedidoFlowState?;
+        return PedidoMesasPage(flowState: flowState);
       },
     ),
     GoRoute(
       path: '/pedido_menu',
       builder: (BuildContext context, GoRouterState state) {
-        final mesas = state.extra as List<MesaModel>;
-        return PedidoMenuPage(mesasSeleccionadas: mesas);
+        final flowState = state.extra as PedidoFlowState;
+        return PedidoMenuPage(flowState: flowState);
       },
     ),
     GoRoute(
       path: '/pedido_resumen',
       builder: (BuildContext context, GoRouterState state) {
-        final extra = state.extra as Map<String, dynamic>;
-        return PedidoResumenPage(
-          mesas: extra['mesas'] as List<MesaModel>,
-          productos: extra['productos'] as List<Map<String, dynamic>>,
-        );
+        final flowState = state.extra as PedidoFlowState;
+        return PedidoResumenPage(flowState: flowState);
       },
     ),
+
     GoRoute(
       path: '/gestion_mesas',
       builder: (BuildContext context, GoRouterState state) {

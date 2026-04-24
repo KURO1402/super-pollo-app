@@ -22,9 +22,25 @@ class MenuItemWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final screenW = MediaQuery.of(context).size.width;
+    final isSmall = screenW < 360;
+
+    final double imgSize = isSmall ? 70 : 85;
+    final double nameFontSize = isSmall ? 13 : 15;
+    final double descFontSize = isSmall ? 11 : 13;
+    final double priceFontSize = isSmall ? 13 : 15;
+    final double hMargin = isSmall ? 6 : 12;
+    final double vMargin = isSmall ? 4 : 6;
+    final double padding = isSmall ? 8 : 12;
+    final double innerGap = isSmall ? 8 : 12;
+    final double btnSize = isSmall ? 26 : 30;
+    final double btnIconSize = isSmall ? 15 : 18;
+    final double counterFontSize = isSmall ? 13 : 15;
+    final double counterHPad = isSmall ? 6 : 10;
+
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
-      padding: const EdgeInsets.all(12),
+      margin: EdgeInsets.symmetric(vertical: vMargin, horizontal: hMargin),
+      padding: EdgeInsets.all(padding),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
@@ -39,21 +55,38 @@ class MenuItemWidget extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // 1. Imagen
           ClipRRect(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(10),
             child: images.isNotEmpty
                 ? Image.network(
                     images[0],
-                    width: 100,
-                    height: 100,
+                    width: imgSize,
+                    height: imgSize,
                     fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Container(
+                      width: imgSize,
+                      height: imgSize,
+                      color: Colors.grey[200],
+                      child: Icon(
+                        Icons.fastfood_rounded,
+                        color: Colors.grey[400],
+                        size: imgSize * 0.4,
+                      ),
+                    ),
                   )
-                : Container(width: 70, height: 70, color: Colors.grey[200]),
+                : Container(
+                    width: imgSize,
+                    height: imgSize,
+                    color: Colors.grey[200],
+                    child: Icon(
+                      Icons.fastfood_rounded,
+                      color: Colors.grey[400],
+                      size: imgSize * 0.4,
+                    ),
+                  ),
           ),
-          const SizedBox(width: 12),
+          SizedBox(width: innerGap),
 
-          // 2. Información del Producto
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -61,75 +94,138 @@ class MenuItemWidget extends StatelessWidget {
               children: [
                 Text(
                   itemName,
-                  style: const TextStyle(
-                    fontSize: 16,
+                  style: TextStyle(
+                    fontSize: nameFontSize,
                     fontWeight: FontWeight.bold,
                   ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
+                const SizedBox(height: 2),
                 Text(
                   description,
-                  style: TextStyle(fontSize: 13, color: Colors.grey.shade400),
+                  style: TextStyle(
+                    fontSize: descFontSize,
+                    color: Colors.grey.shade400,
+                  ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 4),
                 Text(
                   price,
-                  style: const TextStyle(
-                    fontSize: 16,
+                  style: TextStyle(
+                    fontSize: priceFontSize,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF2196F3),
+                    color: const Color(0xFF1565C0),
                   ),
                 ),
               ],
             ),
           ),
 
-          // 3. Contador con callbacks
-          _buildCounter(),
+          SizedBox(width: isSmall ? 6 : 8),
+
+          // 3. Contador
+          _CounterWidget(
+            quantity: quantity,
+            onIncrementar: onIncrementar,
+            onDecrementar: onDecrementar,
+            btnSize: btnSize,
+            btnIconSize: btnIconSize,
+            counterFontSize: counterFontSize,
+            hPadding: counterHPad,
+          ),
         ],
       ),
     );
   }
+}
 
-  Widget _buildCounter() {
+class _CounterWidget extends StatelessWidget {
+  final int quantity;
+  final VoidCallback onIncrementar;
+  final VoidCallback onDecrementar;
+  final double btnSize;
+  final double btnIconSize;
+  final double counterFontSize;
+  final double hPadding;
+
+  const _CounterWidget({
+    required this.quantity,
+    required this.onIncrementar,
+    required this.onDecrementar,
+    required this.btnSize,
+    required this.btnIconSize,
+    required this.counterFontSize,
+    required this.hPadding,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+      padding: EdgeInsets.symmetric(horizontal: hPadding * 0.4, vertical: 4),
       decoration: BoxDecoration(
         color: const Color(0xFFF5F5F5),
         borderRadius: BorderRadius.circular(10),
       ),
       child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
           GestureDetector(
-            onTap: onDecrementar, // ← conectado
-            child: _buildActionButton(Icons.remove, isPrimary: false),
+            onTap: onDecrementar,
+            child: _ActionButton(
+              icon: Icons.remove,
+              isPrimary: false,
+              size: btnSize,
+              iconSize: btnIconSize,
+            ),
           ),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10),
+            padding: EdgeInsets.symmetric(horizontal: hPadding * 0.6),
             child: Text(
               '$quantity',
-              style: const TextStyle(
-                fontSize: 15,
+              style: TextStyle(
+                fontSize: counterFontSize,
                 fontWeight: FontWeight.bold,
               ),
             ),
           ),
           GestureDetector(
-            onTap: onIncrementar, // ← conectado
-            child: _buildActionButton(Icons.add, isPrimary: true),
+            onTap: onIncrementar,
+            child: _ActionButton(
+              icon: Icons.add,
+              isPrimary: true,
+              size: btnSize,
+              iconSize: btnIconSize,
+            ),
           ),
         ],
       ),
     );
   }
+}
 
-  Widget _buildActionButton(IconData icon, {required bool isPrimary}) {
+class _ActionButton extends StatelessWidget {
+  final IconData icon;
+  final bool isPrimary;
+  final double size;
+  final double iconSize;
+
+  const _ActionButton({
+    required this.icon,
+    required this.isPrimary,
+    required this.size,
+    required this.iconSize,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
-      width: 30,
-      height: 30,
+      width: size,
+      height: size,
       decoration: BoxDecoration(
-        color: isPrimary ? const Color(0xFF2196F3) : Colors.white,
+        color: isPrimary ? const Color(0xFF1565C0) : Colors.white,
         borderRadius: BorderRadius.circular(8),
         boxShadow: [
           if (!isPrimary)
@@ -142,8 +238,8 @@ class MenuItemWidget extends StatelessWidget {
       ),
       child: Icon(
         icon,
-        size: 18,
-        color: isPrimary ? Colors.white : const Color(0xFF2196F3),
+        size: iconSize,
+        color: isPrimary ? Colors.white : const Color(0xFF1565C0),
       ),
     );
   }
