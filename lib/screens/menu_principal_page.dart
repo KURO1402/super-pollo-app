@@ -91,7 +91,7 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
   }
 
   Future<void> _logout() async {
-    await TokenStorage.clearToken();
+    await TokenStorage.clearTokens();
     if (!mounted) return;
     context.go("/");
   }

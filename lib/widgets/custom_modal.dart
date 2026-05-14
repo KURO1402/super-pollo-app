@@ -1,114 +1,5 @@
 import 'package:flutter/material.dart';
 
-class CustomModal extends StatelessWidget {
-  final String title;
-  final String message;
-  final IconData icon;
-  final Color color;
-  final bool isSuccess;
-  final VoidCallback? onClose;
-  final Duration? autoCloseDuration;
-
-  const CustomModal({
-    super.key,
-    required this.title,
-    required this.message,
-    required this.icon,
-    required this.color,
-    this.isSuccess = false,
-    this.onClose,
-    this.autoCloseDuration,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    // Auto-close si se especifica una duración
-    if (autoCloseDuration != null) {
-      Future.delayed(autoCloseDuration!, () {
-        if (Navigator.canPop(context)) {
-          Navigator.pop(context);
-          onClose?.call();
-        }
-      });
-    }
-
-    return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          color: Colors.white,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Icono circular más pequeño
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(icon, color: color, size: 32),
-            ),
-            const SizedBox(height: 12),
-
-            // Título más pequeño
-            Text(
-              title,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.grey[800],
-              ),
-            ),
-            const SizedBox(height: 6),
-
-            // Mensaje con fuente más pequeña
-            Text(
-              message,
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-            ),
-
-            // Botón de cerrar más pequeño
-            if (!isSuccess) ...[
-              const SizedBox(height: 16),
-              SizedBox(
-                width: 120, // Ancho fijo más pequeño
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    onClose?.call();
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: color,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    minimumSize: const Size(
-                      100,
-                      36,
-                    ), // Tamaño mínimo más pequeño
-                  ),
-                  child: const Text(
-                    'Cerrar',
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-                  ),
-                ),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// Extensión para facilitar el uso del modal
 extension ModalExtension on BuildContext {
   void showCustomModal({
     required String title,
@@ -119,17 +10,153 @@ extension ModalExtension on BuildContext {
     VoidCallback? onClose,
     Duration? autoCloseDuration,
   }) {
-    showDialog(
-      context: this,
-      barrierDismissible: !isSuccess,
-      builder: (context) => CustomModal(
+    final overlay = Overlay.of(this);
+    late OverlayEntry entry;
+
+    entry = OverlayEntry(
+      builder: (_) => _ToastWidget(
         title: title,
         message: message,
         icon: icon,
         color: color,
-        isSuccess: isSuccess,
-        onClose: onClose,
-        autoCloseDuration: autoCloseDuration,
+        onDismiss: () {
+          entry.remove();
+          onClose?.call();
+        },
+        duration: autoCloseDuration ?? const Duration(seconds: 3),
+      ),
+    );
+
+    overlay.insert(entry);
+  }
+}
+
+class _ToastWidget extends StatefulWidget {
+  final String title;
+  final String message;
+  final IconData icon;
+  final Color color;
+  final VoidCallback onDismiss;
+  final Duration duration;
+
+  const _ToastWidget({
+    required this.title,
+    required this.message,
+    required this.icon,
+    required this.color,
+    required this.onDismiss,
+    required this.duration,
+  });
+
+  @override
+  State<_ToastWidget> createState() => _ToastWidgetState();
+}
+
+class _ToastWidgetState extends State<_ToastWidget>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<Offset> _slide;
+  late Animation<double> _fade;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
+    _slide = Tween<Offset>(
+      begin: const Offset(0, 1),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
+    _fade = CurvedAnimation(parent: _controller, curve: Curves.easeOut);
+
+    _controller.forward();
+    Future.delayed(widget.duration, _dismiss);
+  }
+
+  void _dismiss() async {
+    if (!mounted) return;
+    await _controller.reverse();
+    widget.onDismiss();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned(
+      bottom: 40,
+      left: 16,
+      right: 16,
+      child: SlideTransition(
+        position: _slide,
+        child: FadeTransition(
+          opacity: _fade,
+          child: Material(
+            color: Colors.transparent,
+            child: GestureDetector(
+              onTap: _dismiss,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 14,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1a0a02),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: widget.color.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(widget.icon, color: widget.color, size: 20),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            widget.title,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            widget.message,
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.6),
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Icon(
+                      Icons.close,
+                      color: Colors.white.withOpacity(0.3),
+                      size: 16,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

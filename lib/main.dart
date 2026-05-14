@@ -11,11 +11,24 @@ import 'package:super_pollo_app/screens/pedido_menu_page.dart';
 import 'package:super_pollo_app/screens/pedido_mesas_page.dart';
 import 'package:super_pollo_app/screens/pedido_resumen_page.dart';
 import 'package:super_pollo_app/utils/notificaciones_state.dart';
+import 'package:super_pollo_app/utils/token_storage.dart';
 
 final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey =
     GlobalKey<ScaffoldMessengerState>();
 
+// navigatorKey global para redirigir desde DioClient
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
 final GoRouter router = GoRouter(
+  navigatorKey: navigatorKey, // <-- conectar el key al router
+  redirect: (context, state) async {
+    final haySesion = await TokenStorage.haySession();
+    final enLogin = state.matchedLocation == '/';
+
+    if (!haySesion && !enLogin) return '/';
+    if (haySesion && enLogin) return '/menu_principal';
+    return null;
+  },
   routes: <RouteBase>[
     GoRoute(
       path: '/',
