@@ -12,15 +12,16 @@ import 'package:super_pollo_app/screens/pedido_resumen_page.dart';
 import 'package:super_pollo_app/state/pedido_flow_state.dart';
 import 'package:super_pollo_app/utils/notificaciones_state.dart';
 import 'package:super_pollo_app/utils/token_storage.dart';
+import 'package:super_pollo_app/theme/app_theme.dart';
+import 'package:super_pollo_app/theme/theme_provider.dart';
 
 final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey =
     GlobalKey<ScaffoldMessengerState>();
 
-// navigatorKey global para redirigir desde DioClient
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 final GoRouter router = GoRouter(
-  navigatorKey: navigatorKey, // <-- conectar el key al router
+  navigatorKey: navigatorKey,
   redirect: (context, state) async {
     final haySesion = await TokenStorage.haySession();
     final enLogin = state.matchedLocation == '/';
@@ -32,17 +33,14 @@ final GoRouter router = GoRouter(
   routes: <RouteBase>[
     GoRoute(
       path: '/',
-      builder: (BuildContext context, GoRouterState state) {
-        return const InicioSesionPage();
-      },
+      builder: (BuildContext context, GoRouterState state) =>
+          const InicioSesionPage(),
     ),
     GoRoute(
       path: '/menu_principal',
-      builder: (BuildContext context, GoRouterState state) {
-        return const MenuPrincipalPage();
-      },
+      builder: (BuildContext context, GoRouterState state) =>
+          const MenuPrincipalPage(),
     ),
-
     GoRoute(
       path: '/pedido_mesas',
       builder: (BuildContext context, GoRouterState state) {
@@ -64,37 +62,35 @@ final GoRouter router = GoRouter(
         return PedidoResumenPage(flowState: flowState);
       },
     ),
-
     GoRoute(
       path: '/gestion_mesas',
-      builder: (BuildContext context, GoRouterState state) {
-        return const GestionMesasPage();
-      },
+      builder: (BuildContext context, GoRouterState state) =>
+          const GestionMesasPage(),
     ),
     GoRoute(
       path: '/gestion_pedidos',
-      builder: (BuildContext context, GoRouterState state) {
-        return const GestionPedidosPage();
-      },
+      builder: (BuildContext context, GoRouterState state) =>
+          const GestionPedidosPage(),
     ),
     GoRoute(
       path: '/notificaciones',
-      builder: (BuildContext context, GoRouterState state) {
-        return const NotificacionesPage();
-      },
+      builder: (BuildContext context, GoRouterState state) =>
+          const NotificacionesPage(),
     ),
     GoRoute(
       path: '/configuracion',
-      builder: (BuildContext context, GoRouterState state) {
-        return const ConfiguracionPage();
-      },
+      builder: (BuildContext context, GoRouterState state) =>
+          const ConfiguracionPage(),
     ),
   ],
 );
 
+final themeProvider = ThemeProvider();
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await NotificacionesState().init();
+  await themeProvider.loadSavedTheme();
   runApp(const MyApp());
 }
 
@@ -103,10 +99,19 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp.router(
-      debugShowCheckedModeBanner: false,
-      scaffoldMessengerKey: scaffoldMessengerKey,
-      routerConfig: router,
+    return ListenableBuilder(
+      listenable: themeProvider,
+      builder: (context, _) {
+        return MaterialApp.router(
+          debugShowCheckedModeBanner: false,
+          scaffoldMessengerKey: scaffoldMessengerKey,
+          routerConfig: router,
+
+          theme: AppTheme.light,
+          darkTheme: AppTheme.dark,
+          themeMode: themeProvider.themeMode, 
+        );
+      },
     );
   }
 }
