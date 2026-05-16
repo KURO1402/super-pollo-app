@@ -47,129 +47,153 @@ class MesaCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final config = _estadoConfig;
 
-    return GestureDetector(
-      onTap: _isUnavailable ? null : onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        curve: Curves.easeInOut,
-        decoration: BoxDecoration(
-          color: isSelected
-              ? const Color(0xFF1565C0).withOpacity(0.06)
-              : _isUnavailable
-              ? config
-                    .bgColor // ← fondo del color del estado
-              : Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
+    final screenW = MediaQuery.of(context).size.width;
+    
+    final double cardHeight;
+    if (screenW < 320) {
+      cardHeight = 130;
+    } else if (screenW < 360) {
+      cardHeight = 140;
+    } else if (screenW < 400) {
+      cardHeight = 150;
+    } else {
+      cardHeight = 160;
+    }
+
+    final bool isSmall = screenW < 360;
+
+    final double iconSize = screenW < 320 ? 20 : (isSmall ? 22 : 28);
+    final double nameFontSize = screenW < 320 ? 12 : (isSmall ? 13 : 15);
+    final double capacityFontSize = screenW < 320 ? 9 : (isSmall ? 10 : 12);
+    final double capacityIconSize = screenW < 320 ? 9 : (isSmall ? 10 : 12);
+    final double badgeFontSize = screenW < 320 ? 8 : (isSmall ? 9 : 11);
+    final double badgeIconSize = screenW < 320 ? 8 : (isSmall ? 9 : 11);
+    final double hPadding = screenW < 320 ? 6 : (isSmall ? 8 : 12);
+    final double vPadding = screenW < 320 ? 5 : (isSmall ? 7 : 10);
+    final double gap1 = screenW < 320 ? 3 : (isSmall ? 4 : 6);
+    final double gap2 = screenW < 320 ? 1 : (isSmall ? 1 : 2);
+    final double gap3 = screenW < 320 ? 3 : (isSmall ? 5 : 8);
+
+    return SizedBox(
+      height: cardHeight,
+      child: GestureDetector(
+        onTap: _isUnavailable ? null : onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeInOut,
+          decoration: BoxDecoration(
             color: isSelected
-                ? const Color(0xFF1565C0)
+                ? const Color(0xFF1565C0).withOpacity(0.06)
                 : _isUnavailable
-                ? config.color.withOpacity(0.4) // ← borde del color del estado
-                : const Color(0xFFE8E8E8),
-            width: isSelected ? 2 : 1,
-          ),
-          boxShadow: isSelected
-              ? [
-                  BoxShadow(
-                    color: const Color(0xFF1565C0).withOpacity(0.15),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  ),
-                ]
-              : [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.04),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.table_restaurant_rounded,
-                size: 28,
-                color: isSelected
-                    ? const Color(0xFF1565C0)
-                    : _isUnavailable
-                    ? config
-                          .color // ← ícono del color del estado
-                    : const Color(0xFF424242),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                mesa.nombre,
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: -0.3,
-                  color: _isUnavailable
-                      ? config
-                            .color // ← nombre del color del estado
-                      : const Color(0xFF1A1A1A),
-                ),
-              ),
-              const SizedBox(height: 2),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.person_outline_rounded,
-                    size: 12,
-                    color: _isUnavailable
-                        ? config.color.withOpacity(
-                            0.6,
-                          ) // ← ícono persona del color del estado
-                        : const Color(0xFF757575),
-                  ),
-                  const SizedBox(width: 3),
-                  Text(
-                    '${mesa.capacidadMesa} personas',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: _isUnavailable
-                          ? config.color.withOpacity(
-                              0.6,
-                            ) // ← texto personas del color del estado
-                          : const Color(0xFF757575),
+                    ? config.bgColor
+                    : Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: isSelected
+                  ? const Color(0xFF1565C0)
+                  : _isUnavailable
+                      ? config.color.withOpacity(0.4)
+                      : const Color(0xFFE8E8E8),
+              width: isSelected ? 2 : 1,
+            ),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: const Color(0xFF1565C0).withOpacity(0.15),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
                     ),
+                  ]
+                : [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.04),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+          ),
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: hPadding, vertical: vPadding),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.table_restaurant_rounded,
+                  size: iconSize,
+                  color: isSelected
+                      ? const Color(0xFF1565C0)
+                      : _isUnavailable
+                          ? config.color
+                          : const Color(0xFF424242),
+                ),
+                SizedBox(height: gap1),
+                Text(
+                  mesa.nombre,
+                  style: TextStyle(
+                    fontSize: nameFontSize,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: -0.3,
+                    color: _isUnavailable ? config.color : const Color(0xFF1A1A1A),
                   ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 4,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                decoration: BoxDecoration(
-                  color: config.color.withOpacity(
-                    0.15,
-                  ), // ← badge más visible sobre el fondo coloreado
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Row(
+                SizedBox(height: gap2),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(config.icon, size: 11, color: config.color),
-                    const SizedBox(width: 4),
+                    Icon(
+                      Icons.person_outline_rounded,
+                      size: capacityIconSize,
+                      color: _isUnavailable
+                          ? config.color.withOpacity(0.6)
+                          : const Color(0xFF757575),
+                    ),
+                    const SizedBox(width: 3),
                     Text(
-                      config.label,
+                      '${mesa.capacidadMesa} per.',
                       style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: config.color,
-                        letterSpacing: 0.2,
+                        fontSize: capacityFontSize,
+                        color: _isUnavailable
+                            ? config.color.withOpacity(0.6)
+                            : const Color(0xFF757575),
                       ),
                     ),
                   ],
                 ),
-              ),
-            ],
+                const Spacer(),
+                Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: screenW < 320 ? 4 : (isSmall ? 6 : 10),
+                    vertical: screenW < 320 ? 2 : (isSmall ? 3 : 4),
+                  ),
+                  decoration: BoxDecoration(
+                    color: config.color.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(config.icon, size: badgeIconSize, color: config.color),
+                      const SizedBox(width: 3),
+                      Flexible(
+                        child: Text(
+                          config.label,
+                          style: TextStyle(
+                            fontSize: badgeFontSize,
+                            fontWeight: FontWeight.w600,
+                            color: config.color,
+                            letterSpacing: 0.1,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
