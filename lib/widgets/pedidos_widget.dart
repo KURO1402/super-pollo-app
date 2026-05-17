@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:super_pollo_app/models/listar_pedidos_model.dart';
+import 'package:super_pollo_app/theme/app_colors.dart';
 
-/// Tarjeta individual de pedido para listar
+// ── OrderCardWidget ───────────────────────────────────────────────────────────
 class OrderCardWidget extends StatelessWidget {
   final Pedido pedido;
   final VoidCallback onTap;
@@ -10,16 +11,21 @@ class OrderCardWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colorScheme = Theme.of(context).colorScheme;
+    final cardColor = isDark ? AppColors.navyCard : Colors.white;
+    final borderColor = isDark ? AppColors.navyLight : const Color(0xFFEEEEEE);
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: cardColor,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: const Color(0xFFEEEEEE), width: 1),
+          border: Border.all(color: borderColor),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+              color: Colors.black.withOpacity(isDark ? 0.2 : 0.04),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -30,29 +36,26 @@ class OrderCardWidget extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // Número de mesa principal
+              // Número de mesa
               Container(
                 width: 52,
                 height: 52,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1565C0).withOpacity(0.08),
+                  color: colorScheme.primary.withOpacity(0.10),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(
-                      Icons.table_restaurant_rounded,
-                      size: 16,
-                      color: Color(0xFF1565C0),
-                    ),
+                    Icon(Icons.table_restaurant_rounded,
+                        size: 16, color: colorScheme.primary),
                     const SizedBox(height: 2),
                     Text(
                       pedido.mesaPrincipal,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w800,
-                        color: Color(0xFF1565C0),
+                        color: colorScheme.primary,
                       ),
                     ),
                   ],
@@ -60,30 +63,27 @@ class OrderCardWidget extends StatelessWidget {
               ),
               const SizedBox(width: 14),
 
-              // Información del pedido
+              // Info del pedido
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       'Mesas: ${pedido.mesas.join(', ')}',
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF1A1A1A),
-                        letterSpacing: -0.3,
-                      ),
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 15,
+                            letterSpacing: -0.3,
+                          ),
                     ),
                     const SizedBox(height: 5),
                     Row(
                       children: [
                         Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 3,
-                          ),
+                              horizontal: 8, vertical: 3),
                           decoration: BoxDecoration(
-                            color: pedido.colorEstado.withOpacity(0.1),
+                            color: pedido.colorEstado.withOpacity(0.12),
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
@@ -98,20 +98,17 @@ class OrderCardWidget extends StatelessWidget {
                         const SizedBox(width: 8),
                         Text(
                           '${pedido.totalItems} ${pedido.totalItems == 1 ? 'item' : 'items'}',
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: Color(0xFF9E9E9E),
-                          ),
+                          style: Theme.of(context).textTheme.bodySmall,
                         ),
                       ],
                     ),
                     const SizedBox(height: 3),
                     Text(
                       pedido.tiempoDesdeActualizacion,
-                      style: const TextStyle(
-                        fontSize: 11,
-                        color: Color(0xFFBDBDBD),
-                      ),
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodySmall
+                          ?.copyWith(fontSize: 11),
                     ),
                   ],
                 ),
@@ -126,13 +123,13 @@ class OrderCardWidget extends StatelessWidget {
                     style: const TextStyle(
                       fontSize: 17,
                       fontWeight: FontWeight.w800,
-                      color: Color(0xFF2E7D32),
+                      color: AppColors.success,
                     ),
                   ),
                   const SizedBox(height: 6),
-                  const Icon(
+                  Icon(
                     Icons.chevron_right_rounded,
-                    color: Color(0xFFBDBDBD),
+                    color: isDark ? AppColors.grey500 : AppColors.grey300,
                     size: 20,
                   ),
                 ],
@@ -145,68 +142,65 @@ class OrderCardWidget extends StatelessWidget {
   }
 }
 
-/// Modal/BottomSheet para detalles del pedido
+// ── OrderDetailsModal ─────────────────────────────────────────────────────────
 class OrderDetailsModal extends StatelessWidget {
   final Pedido pedido;
 
   const OrderDetailsModal({super.key, required this.pedido});
 
   void _mostrarConfirmacionEliminar(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardColor = isDark ? AppColors.navyCard : Colors.white;
+
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text(
+        backgroundColor: cardColor,
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(
           '¿Eliminar pedido?',
-          style: TextStyle(
-            fontWeight: FontWeight.w700,
-            fontSize: 18,
-            color: Color(0xFF1A1A1A),
-          ),
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+                fontSize: 18,
+              ),
         ),
         content: Text(
           'Esta acción no se puede deshacer. ¿Deseas eliminar el pedido #${pedido.idPedido}?',
-          style: const TextStyle(fontSize: 14, color: Color(0xFF757575)),
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 14),
         ),
         actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         actions: [
           Row(
             children: [
-              // Botón cancelar
               Expanded(
                 child: GestureDetector(
                   onTap: () => Navigator.pop(ctx),
                   child: Container(
                     height: 46,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF5F5F5),
+                      color: isDark ? AppColors.navyLight : AppColors.grey100,
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Center(
+                    child: Center(
                       child: Text(
                         'Cancelar',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF424242),
-                        ),
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
                       ),
                     ),
                   ),
                 ),
               ),
               const SizedBox(width: 10),
-              // Botón confirmar eliminar
               Expanded(
                 child: GestureDetector(
-                  onTap: () {
-                    Navigator.pop(ctx);
-                    // TODO: llamar al endpoint de eliminar
-                  },
+                  onTap: () => Navigator.pop(ctx),
                   child: Container(
                     height: 46,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFE53935),
+                      color: AppColors.error,
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: const Center(
@@ -231,15 +225,22 @@ class OrderDetailsModal extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colorScheme = Theme.of(context).colorScheme;
+    final sheetBg = isDark ? AppColors.navyDeep : const Color(0xFFFAFAFA);
+    final sectionBg = isDark ? AppColors.navyCard : Colors.white;
+    final handleColor = isDark ? AppColors.navyLight : const Color(0xFFE0E0E0);
+    final dividerColor = isDark ? AppColors.navyLight : const Color(0xFFF0F0F0);
+
     return DraggableScrollableSheet(
       initialChildSize: 0.9,
       minChildSize: 0.5,
       maxChildSize: 0.95,
       builder: (context, scrollController) {
         return Container(
-          decoration: const BoxDecoration(
-            color: Color(0xFFFAFAFA),
-            borderRadius: BorderRadius.only(
+          decoration: BoxDecoration(
+            color: sheetBg,
+            borderRadius: const BorderRadius.only(
               topLeft: Radius.circular(24),
               topRight: Radius.circular(24),
             ),
@@ -249,7 +250,7 @@ class OrderDetailsModal extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Handle de arrastre
+                // Handle
                 Center(
                   child: Padding(
                     padding: const EdgeInsets.only(top: 14, bottom: 6),
@@ -257,21 +258,20 @@ class OrderDetailsModal extends StatelessWidget {
                       width: 40,
                       height: 4,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFE0E0E0),
+                        color: handleColor,
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
                   ),
                 ),
 
-                // Header con fondo blanco
+                // Header
                 Container(
-                  color: Colors.white,
+                  color: sectionBg,
                   padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Fila: título + badge estado
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -281,20 +281,18 @@ class OrderDetailsModal extends StatelessWidget {
                               children: [
                                 Text(
                                   'Mesas: ${pedido.mesas.join(', ')}',
-                                  style: const TextStyle(
-                                    fontSize: 22,
-                                    fontWeight: FontWeight.w800,
-                                    color: Color(0xFF1A1A1A),
-                                    letterSpacing: -0.5,
-                                  ),
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .titleLarge
+                                      ?.copyWith(
+                                        fontSize: 22,
+                                        letterSpacing: -0.5,
+                                      ),
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
                                   'Pedido #${pedido.idPedido}',
-                                  style: const TextStyle(
-                                    fontSize: 13,
-                                    color: Color(0xFF9E9E9E),
-                                  ),
+                                  style: Theme.of(context).textTheme.bodySmall,
                                 ),
                               ],
                             ),
@@ -302,15 +300,12 @@ class OrderDetailsModal extends StatelessWidget {
                           const SizedBox(width: 12),
                           Container(
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 6,
-                            ),
+                                horizontal: 12, vertical: 6),
                             decoration: BoxDecoration(
-                              color: pedido.colorEstado.withOpacity(0.1),
+                              color: pedido.colorEstado.withOpacity(0.12),
                               borderRadius: BorderRadius.circular(20),
                               border: Border.all(
-                                color: pedido.colorEstado.withOpacity(0.4),
-                              ),
+                                  color: pedido.colorEstado.withOpacity(0.4)),
                             ),
                             child: Text(
                               pedido.estadoLabel.toUpperCase(),
@@ -324,10 +319,7 @@ class OrderDetailsModal extends StatelessWidget {
                           ),
                         ],
                       ),
-
                       const SizedBox(height: 16),
-
-                      // Resumen rápido: items y tiempo
                       Row(
                         children: [
                           _InfoChip(
@@ -348,38 +340,36 @@ class OrderDetailsModal extends StatelessWidget {
 
                 const SizedBox(height: 12),
 
-                // Sección productos
+                // Productos
                 Container(
-                  color: Colors.white,
+                  color: sectionBg,
                   padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Row(
+                      Row(
                         children: [
-                          Icon(
-                            Icons.receipt_long_outlined,
-                            size: 18,
-                            color: Color(0xFF1565C0),
-                          ),
-                          SizedBox(width: 8),
+                          Icon(Icons.receipt_long_outlined,
+                              size: 18, color: colorScheme.primary),
+                          const SizedBox(width: 8),
                           Text(
                             'Productos',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                              color: Color(0xFF1A1A1A),
-                            ),
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleMedium
+                                ?.copyWith(fontSize: 16),
                           ),
                         ],
                       ),
                       const SizedBox(height: 16),
                       for (var i = 0; i < pedido.detalles.length; i++) ...[
-                        _buildOrderItemWidget(pedido.detalles[i]),
+                        _buildOrderItemWidget(context, pedido.detalles[i],
+                            colorScheme, isDark),
                         if (i < pedido.detalles.length - 1)
-                          const Padding(
-                            padding: EdgeInsets.symmetric(vertical: 12),
-                            child: Divider(height: 1, color: Color(0xFFF0F0F0)),
+                          Padding(
+                            padding:
+                                const EdgeInsets.symmetric(vertical: 12),
+                            child: Divider(height: 1, color: dividerColor),
                           ),
                       ],
                     ],
@@ -390,25 +380,24 @@ class OrderDetailsModal extends StatelessWidget {
 
                 // Total
                 Container(
-                  color: Colors.white,
+                  color: sectionBg,
                   padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
+                      Text(
                         'Total a pagar',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF1A1A1A),
-                        ),
+                        style: Theme.of(context)
+                            .textTheme
+                            .titleMedium
+                            ?.copyWith(fontSize: 16),
                       ),
                       Text(
                         'S/ ${pedido.precioPrecuenta}',
                         style: const TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.w800,
-                          color: Color(0xFF2E7D32),
+                          color: AppColors.success,
                         ),
                       ),
                     ],
@@ -422,34 +411,38 @@ class OrderDetailsModal extends StatelessWidget {
                   padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
                   child: Column(
                     children: [
-                      // Fila: Cerrar + Editar
                       Row(
                         children: [
+                          // Cerrar
                           Expanded(
                             child: GestureDetector(
                               onTap: () => Navigator.pop(context),
                               child: Container(
                                 height: 50,
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFF5F5F5),
+                                  color: isDark
+                                      ? AppColors.navyLight
+                                      : AppColors.grey100,
                                   borderRadius: BorderRadius.circular(12),
                                 ),
-                                child: const Center(
+                                child: Center(
                                   child: Text(
                                     'Cerrar',
-                                    style: TextStyle(
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.w600,
-                                      color: Color(0xFF424242),
-                                    ),
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium
+                                        ?.copyWith(
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 15,
+                                        ),
                                   ),
                                 ),
                               ),
                             ),
                           ),
-                          const SizedBox(width: 12),
-                          // Botón editar (solo si no está completado)
-                          if (pedido.estadoPedido != 'completado')
+                          // Editar
+                          if (pedido.estadoPedido != 'completado') ...[
+                            const SizedBox(width: 12),
                             Expanded(
                               child: GestureDetector(
                                 onTap: () {
@@ -459,18 +452,15 @@ class OrderDetailsModal extends StatelessWidget {
                                 child: Container(
                                   height: 50,
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFF1565C0),
+                                    color: colorScheme.primary,
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                   child: const Center(
                                     child: Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        Icon(
-                                          Icons.edit_outlined,
-                                          color: Colors.white,
-                                          size: 16,
-                                        ),
+                                        Icon(Icons.edit_outlined,
+                                            color: Colors.white, size: 16),
                                         SizedBox(width: 6),
                                         Text(
                                           'Editar',
@@ -486,41 +476,38 @@ class OrderDetailsModal extends StatelessWidget {
                                 ),
                               ),
                             ),
+                          ],
                         ],
                       ),
 
-                      const SizedBox(height: 12),
-
-                      // Botón eliminar (solo si no está completado)
-                      if (pedido.estadoPedido != 'completado')
+                      // Eliminar
+                      if (pedido.estadoPedido != 'completado') ...[
+                        const SizedBox(height: 12),
                         GestureDetector(
                           onTap: () => _mostrarConfirmacionEliminar(context),
                           child: Container(
                             height: 50,
                             width: double.infinity,
                             decoration: BoxDecoration(
-                              color: const Color(0xFFFFEBEE),
+                              color: AppColors.error.withOpacity(
+                                  isDark ? 0.15 : 0.08),
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
-                                color: const Color(0xFFE53935).withOpacity(0.3),
-                              ),
+                                  color: AppColors.error.withOpacity(0.3)),
                             ),
                             child: const Center(
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Icon(
-                                    Icons.delete_outline_rounded,
-                                    color: Color(0xFFE53935),
-                                    size: 18,
-                                  ),
+                                  Icon(Icons.delete_outline_rounded,
+                                      color: AppColors.error, size: 18),
                                   SizedBox(width: 6),
                                   Text(
                                     'Eliminar pedido',
                                     style: TextStyle(
                                       fontSize: 15,
                                       fontWeight: FontWeight.w600,
-                                      color: Color(0xFFE53935),
+                                      color: AppColors.error,
                                     ),
                                   ),
                                 ],
@@ -528,6 +515,7 @@ class OrderDetailsModal extends StatelessWidget {
                             ),
                           ),
                         ),
+                      ],
                     ],
                   ),
                 ),
@@ -539,25 +527,30 @@ class OrderDetailsModal extends StatelessWidget {
     );
   }
 
-  static Widget _buildOrderItemWidget(DetallePedido detalle) {
+  static Widget _buildOrderItemWidget(
+    BuildContext context,
+    DetallePedido detalle,
+    ColorScheme colorScheme,
+    bool isDark,
+  ) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        // Cantidad badge
+        // Badge cantidad
         Container(
           width: 32,
           height: 32,
           decoration: BoxDecoration(
-            color: const Color(0xFF1565C0).withOpacity(0.08),
+            color: colorScheme.primary.withOpacity(0.10),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Center(
             child: Text(
               '${detalle.cantidadPedido}x',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
-                color: Color(0xFF1565C0),
+                color: colorScheme.primary,
               ),
             ),
           ),
@@ -567,28 +560,25 @@ class OrderDetailsModal extends StatelessWidget {
         Expanded(
           child: Text(
             detalle.nombreProducto,
-            style: const TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w500,
-              color: Color(0xFF1A1A1A),
-            ),
+            style: Theme.of(context)
+                .textTheme
+                .bodyMedium
+                ?.copyWith(fontWeight: FontWeight.w500, fontSize: 15),
           ),
         ),
         // Subtotal
         Text(
           'S/ ${detalle.subtotal}',
-          style: const TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w700,
-            color: Color(0xFF1A1A1A),
-          ),
+          style: Theme.of(context)
+              .textTheme
+              .bodyMedium
+              ?.copyWith(fontWeight: FontWeight.w700, fontSize: 15),
         ),
       ],
     );
   }
 }
 
-/// Chip de info rápida (items, tiempo)
 class _InfoChip extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -597,24 +587,25 @@ class _InfoChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: const Color(0xFFF5F5F5),
+        color: isDark ? AppColors.navyLight : AppColors.grey100,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 13, color: const Color(0xFF9E9E9E)),
+          Icon(icon, size: 13, color: AppColors.grey500),
           const SizedBox(width: 5),
           Text(
             label,
-            style: const TextStyle(
-              fontSize: 12,
-              color: Color(0xFF757575),
-              fontWeight: FontWeight.w500,
-            ),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                ),
           ),
         ],
       ),
@@ -622,7 +613,6 @@ class _InfoChip extends StatelessWidget {
   }
 }
 
-/// Widget para listar pedidos con estado de carga
 class OrderListWidget extends StatelessWidget {
   final List<Pedido> pedidos;
   final bool isLoading;
@@ -639,9 +629,11 @@ class OrderListWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     if (isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(color: Color(0xFF1565C0)),
+      return Center(
+        child: CircularProgressIndicator(color: colorScheme.primary),
       );
     }
 
@@ -650,12 +642,13 @@ class OrderListWidget extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.wifi_off_rounded, size: 48, color: Colors.grey.shade400),
+            const Icon(Icons.wifi_off_rounded,
+                size: 48, color: AppColors.grey300),
             const SizedBox(height: 12),
             Text(
               errorMessage!,
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 15, color: Color(0xFF757575)),
+              style: Theme.of(context).textTheme.bodyMedium,
             ),
           ],
         ),
@@ -667,15 +660,12 @@ class OrderListWidget extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.receipt_long_outlined,
-              size: 48,
-              color: Colors.grey.shade300,
-            ),
+            const Icon(Icons.receipt_long_outlined,
+                size: 48, color: AppColors.grey300),
             const SizedBox(height: 12),
-            const Text(
+            Text(
               'No hay pedidos disponibles',
-              style: TextStyle(fontSize: 15, color: Color(0xFF9E9E9E)),
+              style: Theme.of(context).textTheme.bodyMedium,
             ),
           ],
         ),

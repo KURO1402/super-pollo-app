@@ -4,6 +4,7 @@ import 'package:super_pollo_app/services/listar_pedidos_service.dart';
 import 'package:super_pollo_app/models/listar_pedidos_model.dart';
 import 'package:super_pollo_app/utils/notificaciones_state.dart';
 import 'package:super_pollo_app/widgets/pedidos_widget.dart';
+import 'package:super_pollo_app/theme/app_colors.dart';
 import '../utils/token_storage.dart';
 
 class MenuPrincipalPage extends StatefulWidget {
@@ -14,7 +15,6 @@ class MenuPrincipalPage extends StatefulWidget {
 }
 
 class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
-  String mensaje = "Esperando datos ...";
   String nombre = "";
   String apellido = "";
   List<Pedido> _recentOrders = [];
@@ -28,39 +28,23 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
     _cargarPedidosRecientes();
   }
 
-  /// Carga los pedidos recientes desde el backend
   void _cargarPedidosRecientes() async {
-    setState(() {
-      _isLoadingOrders = true;
-    });
-
+    setState(() => _isLoadingOrders = true);
     try {
       final ahora = DateTime.now();
       final fecha =
           '${ahora.year}-${ahora.month.toString().padLeft(2, '0')}-${ahora.day.toString().padLeft(2, '0')}';
       final hora =
           '${ahora.hour.toString().padLeft(2, '0')}:${ahora.minute.toString().padLeft(2, '0')}';
-
-      final response = await PedidosService.listarPedidos(
-        fecha: fecha,
-        hora: hora,
-      );
-
+      final response = await PedidosService.listarPedidos(fecha: fecha, hora: hora);
       if (mounted) {
         setState(() {
-          if (response.ok) {
-            // Tomar solo los primeros 3 pedidos para "recientes"
-            _recentOrders = response.pedidos.take(3).toList();
-          }
+          if (response.ok) _recentOrders = response.pedidos.take(3).toList();
           _isLoadingOrders = false;
         });
       }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isLoadingOrders = false;
-        });
-      }
+    } catch (_) {
+      if (mounted) setState(() => _isLoadingOrders = false);
     }
   }
 
@@ -76,9 +60,7 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
     _loadUserData();
   }
 
-  void _actualizarConteo() {
-    setState(() {});
-  }
+  void _actualizarConteo() => setState(() {});
 
   void _loadUserData() {
     final data = GoRouterState.of(context).extra as Map?;
@@ -96,9 +78,7 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
     context.go("/");
   }
 
-  void _navigateTo(String route) {
-    context.go(route);
-  }
+  void _navigateTo(String route) => context.go(route);
 
   void _showOrderDetails(Pedido pedido) {
     showModalBottomSheet(
@@ -112,7 +92,6 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16.0),
@@ -123,7 +102,7 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
               const SizedBox(height: 24),
               _buildStatisticsCards(),
               const SizedBox(height: 24),
-              _buildQuickActionsTitle(),
+              _buildSectionTitle('Acciones Rápidas'),
               const SizedBox(height: 16),
               _buildQuickActionsButtons(),
               const SizedBox(height: 32),
@@ -137,17 +116,20 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
     );
   }
 
-  // ==================== WIDGETS SECCIONADOS ====================
-
+  // ── Header ──────────────────────────────────────────────────────────────────
   Widget _buildHeaderWithMenuAndUser() {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardColor = isDark ? AppColors.navyCard : Colors.white;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardColor,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
+            color: Colors.black.withOpacity(isDark ? 0.2 : 0.06),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -157,11 +139,11 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
         children: [
           Container(
             decoration: BoxDecoration(
-              color: Colors.blue.withOpacity(0.1),
+              color: colorScheme.primary.withOpacity(0.10),
               borderRadius: BorderRadius.circular(12),
             ),
             child: IconButton(
-              icon: const Icon(Icons.menu, color: Colors.blue, size: 26),
+              icon: Icon(Icons.menu, color: colorScheme.primary, size: 26),
               onPressed: _showLeftMenu,
             ),
           ),
@@ -175,11 +157,10 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
                     "$nombre $apellido".trim().isEmpty
                         ? "Usuario"
                         : "$nombre $apellido",
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black87,
-                    ),
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                        ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -187,16 +168,14 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Text(
-                        "En línea",
-                        style: TextStyle(fontSize: 11, color: Colors.grey),
-                      ),
+                      Text("En línea",
+                          style: Theme.of(context).textTheme.bodySmall),
                       const SizedBox(width: 4),
                       Container(
                         width: 8,
                         height: 8,
                         decoration: const BoxDecoration(
-                          color: Colors.green,
+                          color: AppColors.success,
                           shape: BoxShape.circle,
                         ),
                       ),
@@ -208,28 +187,21 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
               Container(
                 padding: const EdgeInsets.all(2),
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Colors.blue, Colors.lightBlueAccent],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
+                  gradient: AppColors.flameGradientLight,
                   shape: BoxShape.circle,
                 ),
-                child: const CircleAvatar(
+                child: CircleAvatar(
                   radius: 18,
-                  backgroundColor: Colors.white,
-                  child: Icon(Icons.person, color: Colors.blue, size: 20),
+                  backgroundColor: cardColor,
+                  child: Icon(Icons.person, color: colorScheme.primary, size: 20),
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 4),
               Stack(
                 children: [
                   IconButton(
-                    icon: const Icon(
-                      Icons.notifications_outlined,
-                      color: Colors.blue,
-                      size: 26,
-                    ),
+                    icon: Icon(Icons.notifications_outlined,
+                        color: colorScheme.primary, size: 26),
                     onPressed: () => context.push("/notificaciones"),
                   ),
                   Positioned(
@@ -238,20 +210,15 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
                     child: Container(
                       padding: const EdgeInsets.all(2),
                       decoration: const BoxDecoration(
-                        color: Colors.red,
-                        shape: BoxShape.circle,
-                      ),
-                      constraints: const BoxConstraints(
-                        minWidth: 16,
-                        minHeight: 16,
-                      ),
+                          color: AppColors.error, shape: BoxShape.circle),
+                      constraints:
+                          const BoxConstraints(minWidth: 16, minHeight: 16),
                       child: Text(
                         '${_notifState.conteo}',
                         style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                        ),
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold),
                         textAlign: TextAlign.center,
                       ),
                     ),
@@ -266,6 +233,12 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
   }
 
   void _showLeftMenu() {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardColor = isDark ? AppColors.navyCard : Colors.white;
+    final footerColor = isDark ? AppColors.navyLight : const Color(0xFFF9F9F9);
+    final borderColor = isDark ? AppColors.navyLight : AppColors.grey100;
+
     showDialog(
       context: context,
       barrierColor: Colors.black54,
@@ -282,28 +255,23 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
                   tween: Tween(begin: -1.0, end: 0.0),
                   duration: const Duration(milliseconds: 300),
                   curve: Curves.easeOutCubic,
-                  builder: (context, value, child) {
-                    return Transform.translate(
-                      offset: Offset(
-                        MediaQuery.of(context).size.width * value,
-                        0,
-                      ),
-                      child: child,
-                    );
-                  },
+                  builder: (context, value, child) => Transform.translate(
+                    offset: Offset(
+                        MediaQuery.of(context).size.width * value, 0),
+                    child: child,
+                  ),
                   child: Material(
                     color: Colors.transparent,
                     child: Container(
                       width: MediaQuery.of(context).size.width * 0.5,
                       height: double.infinity,
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        boxShadow: [
+                      decoration: BoxDecoration(
+                        color: cardColor,
+                        boxShadow: const [
                           BoxShadow(
-                            color: Colors.black26,
-                            blurRadius: 10,
-                            offset: Offset(2, 0),
-                          ),
+                              color: Colors.black26,
+                              blurRadius: 10,
+                              offset: Offset(2, 0))
                         ],
                       ),
                       child: Column(
@@ -311,14 +279,9 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
                           Container(
                             padding: const EdgeInsets.all(20),
                             decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  Colors.blue.shade700,
-                                  Colors.blue.shade500,
-                                ],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                              ),
+                              gradient: isDark
+                                  ? AppColors.flameGradientDark
+                                  : AppColors.flameGradientLight,
                             ),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -327,19 +290,14 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
                                   mainAxisAlignment:
                                       MainAxisAlignment.spaceBetween,
                                   children: [
-                                    const Text(
-                                      'Menú',
-                                      style: TextStyle(
-                                        fontSize: 22,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.white,
-                                      ),
-                                    ),
+                                    const Text('Menú',
+                                        style: TextStyle(
+                                            fontSize: 22,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.white)),
                                     IconButton(
-                                      icon: const Icon(
-                                        Icons.close,
-                                        color: Colors.white,
-                                      ),
+                                      icon: const Icon(Icons.close,
+                                          color: Colors.white),
                                       onPressed: () => Navigator.pop(context),
                                     ),
                                   ],
@@ -350,11 +308,8 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
                                     const CircleAvatar(
                                       radius: 22,
                                       backgroundColor: Colors.white,
-                                      child: Icon(
-                                        Icons.person,
-                                        color: Colors.blue,
-                                        size: 24,
-                                      ),
+                                      child: Icon(Icons.person,
+                                          color: AppColors.brandRed, size: 24),
                                     ),
                                     const SizedBox(width: 12),
                                     Expanded(
@@ -367,33 +322,26 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
                                                 ? "Usuario"
                                                 : "$nombre $apellido",
                                             style: const TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 15,
-                                              fontWeight: FontWeight.w600,
-                                            ),
+                                                color: Colors.white,
+                                                fontSize: 15,
+                                                fontWeight: FontWeight.w600),
                                             maxLines: 1,
                                             overflow: TextOverflow.ellipsis,
                                           ),
                                           const SizedBox(height: 4),
                                           Container(
                                             padding: const EdgeInsets.symmetric(
-                                              horizontal: 8,
-                                              vertical: 2,
-                                            ),
+                                                horizontal: 8, vertical: 2),
                                             decoration: BoxDecoration(
-                                              color: Colors.white.withOpacity(
-                                                0.2,
-                                              ),
+                                              color: Colors.white
+                                                  .withOpacity(0.2),
                                               borderRadius:
                                                   BorderRadius.circular(12),
                                             ),
-                                            child: const Text(
-                                              'Administrador',
-                                              style: TextStyle(
-                                                color: Colors.white,
-                                                fontSize: 11,
-                                              ),
-                                            ),
+                                            child: const Text('Administrador',
+                                                style: TextStyle(
+                                                    color: Colors.white,
+                                                    fontSize: 11)),
                                           ),
                                         ],
                                       ),
@@ -403,6 +351,7 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
                               ],
                             ),
                           ),
+                          // Items del menú
                           Expanded(
                             child: ListView(
                               padding: const EdgeInsets.symmetric(vertical: 8),
@@ -410,7 +359,7 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
                                 _buildMenuItem(
                                   icon: Icons.dashboard,
                                   label: 'Dashboard',
-                                  color: Colors.blue,
+                                  color: colorScheme.primary,
                                   onTap: () {
                                     Navigator.pop(context);
                                     _navigateTo("/menu_principal");
@@ -419,7 +368,7 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
                                 _buildMenuItem(
                                   icon: Icons.table_restaurant,
                                   label: 'Gestión de Mesas',
-                                  color: Colors.green,
+                                  color: AppColors.success,
                                   onTap: () {
                                     Navigator.pop(context);
                                     _navigateTo("/gestion_mesas");
@@ -428,7 +377,7 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
                                 _buildMenuItem(
                                   icon: Icons.shopping_cart,
                                   label: 'Pedidos',
-                                  color: Colors.orange,
+                                  color: AppColors.brandOrange,
                                   badge: '5',
                                   onTap: () {
                                     Navigator.pop(context);
@@ -438,21 +387,21 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
                                 _buildMenuItem(
                                   icon: Icons.settings,
                                   label: 'Configuración',
-                                  color: Colors.grey[700]!,
+                                  color: AppColors.grey500,
                                   onTap: () {
                                     Navigator.pop(context);
                                     context.push("/configuracion");
                                   },
                                 ),
-                                const Divider(
-                                  height: 32,
-                                  indent: 16,
-                                  endIndent: 16,
-                                ),
+                                Divider(
+                                    height: 32,
+                                    indent: 16,
+                                    endIndent: 16,
+                                    color: borderColor),
                                 _buildMenuItem(
                                   icon: Icons.logout,
                                   label: 'Cerrar Sesión',
-                                  color: Colors.red,
+                                  color: AppColors.error,
                                   onTap: () {
                                     Navigator.pop(context);
                                     _logout();
@@ -461,22 +410,21 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
                               ],
                             ),
                           ),
+                          // Footer
                           Container(
                             padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
-                              color: Colors.grey[50],
+                              color: footerColor,
                               border: Border(
-                                top: BorderSide(color: Colors.grey[200]!),
-                              ),
+                                  top: BorderSide(color: borderColor)),
                             ),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                               children: [
-                                _buildFooterIcon(Icons.help_outline, 'Ayuda'),
                                 _buildFooterIcon(
-                                  Icons.info_outline,
-                                  'Acerca de',
-                                ),
+                                    Icons.help_outline, 'Ayuda'),
+                                _buildFooterIcon(
+                                    Icons.info_outline, 'Acerca de'),
                                 _buildFooterIcon(Icons.policy, 'Términos'),
                               ],
                             ),
@@ -510,58 +458,56 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
         ),
         child: Icon(icon, color: color, size: 20),
       ),
-      title: Text(
-        label,
-        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
-      ),
+      title: Text(label,
+          style: Theme.of(context)
+              .textTheme
+              .bodyMedium
+              ?.copyWith(fontWeight: FontWeight.w500, fontSize: 15)),
       trailing: badge != null
           ? Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(
-                color: Colors.red,
+                color: AppColors.error,
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Text(
-                badge,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+              child: Text(badge,
+                  style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold)),
             )
-          : Icon(
-              Icons.arrow_forward_ios,
-              color: color.withOpacity(0.4),
-              size: 14,
-            ),
+          : Icon(Icons.arrow_forward_ios,
+              color: color.withOpacity(0.4), size: 14),
       onTap: onTap,
     );
   }
 
   Widget _buildFooterIcon(IconData icon, String label) {
     return GestureDetector(
-      onTap: () {
-        Navigator.pop(context);
-      },
+      onTap: () => Navigator.pop(context),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, color: Colors.grey[600], size: 18),
+          Icon(icon, color: AppColors.grey500, size: 18),
           const SizedBox(height: 2),
-          Text(label, style: TextStyle(color: Colors.grey[600], fontSize: 10)),
+          Text(label,
+              style: const TextStyle(
+                  color: AppColors.grey500, fontSize: 10)),
         ],
       ),
     );
   }
 
+  // ── Estadísticas ─────────────────────────────────────────────────────────────
   Widget _buildStatisticsCards() {
+    final colorScheme = Theme.of(context).colorScheme;
     return Row(
       children: [
         Expanded(
           child: _buildStatisticCard(
             icon: Icons.table_restaurant,
-            iconColor: Colors.green,
+            iconColor: AppColors.success,
             label: 'Mesas Activas',
             value: '8',
             trend: '+2',
@@ -571,7 +517,7 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
         Expanded(
           child: _buildStatisticCard(
             icon: Icons.attach_money,
-            iconColor: Colors.blue,
+            iconColor: colorScheme.primary,
             label: 'Ventas Hoy',
             value: 'S/ 1,240',
             trend: '+15%',
@@ -588,14 +534,17 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
     required String value,
     String? trend,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardColor = isDark ? AppColors.navyCard : Colors.white;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardColor,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
+            color: Colors.black.withOpacity(isDark ? 0.2 : 0.06),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -610,7 +559,7 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: iconColor.withOpacity(0.1),
+                  color: iconColor.withOpacity(0.12),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(icon, color: iconColor, size: 22),
@@ -618,83 +567,61 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
               if (trend != null)
                 Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
+                      horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: Colors.green.withOpacity(0.1),
+                    color: AppColors.success.withOpacity(0.12),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(
-                        Icons.trending_up,
-                        color: Colors.green,
-                        size: 14,
-                      ),
+                      const Icon(Icons.trending_up,
+                          color: AppColors.success, size: 14),
                       const SizedBox(width: 2),
-                      Text(
-                        trend,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Colors.green,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
+                      Text(trend,
+                          style: const TextStyle(
+                              fontSize: 12,
+                              color: AppColors.success,
+                              fontWeight: FontWeight.w500)),
                     ],
                   ),
                 ),
             ],
           ),
           const SizedBox(height: 16),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey[600],
-              fontWeight: FontWeight.w500,
-            ),
-          ),
+          Text(label, style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 14)),
           const SizedBox(height: 4),
-          Row(
-            children: [
-              Text(
-                value,
-                style: const TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
-                ),
-              ),
-            ],
-          ),
+          Text(value,
+              style: Theme.of(context)
+                  .textTheme
+                  .titleLarge
+                  ?.copyWith(fontSize: 24)),
         ],
       ),
     );
   }
 
-  Widget _buildQuickActionsTitle() {
+  // ── Sección title ─────────────────────────────────────────────────────────────
+  Widget _buildSectionTitle(String title) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 4),
-      child: Text(
-        'Acciones Rápidas',
-        style: TextStyle(
-          fontSize: 18,
-          fontWeight: FontWeight.bold,
-          color: Colors.grey[800],
-        ),
-      ),
+      child: Text(title,
+          style: Theme.of(context)
+              .textTheme
+              .titleMedium
+              ?.copyWith(fontSize: 18)),
     );
   }
 
+  // ── Acciones rápidas ──────────────────────────────────────────────────────────
   Widget _buildQuickActionsButtons() {
+    final colorScheme = Theme.of(context).colorScheme;
     return Row(
       children: [
         Expanded(
           child: _buildQuickActionButton(
             icon: Icons.add_circle,
-            iconColor: Colors.blue,
+            iconColor: colorScheme.primary,
             label: 'Nuevo Pedido',
             subtitle: 'Crear pedido',
             onTap: () => context.push("/pedido_mesas"),
@@ -704,7 +631,7 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
         Expanded(
           child: _buildQuickActionButton(
             icon: Icons.table_chart,
-            iconColor: Colors.green,
+            iconColor: AppColors.success,
             label: 'Ver Mesas',
             subtitle: 'Gestionar mesas',
             onTap: () => context.push("/gestion_mesas"),
@@ -721,13 +648,16 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
     required String subtitle,
     required VoidCallback onTap,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardColor = isDark ? AppColors.navyCard : Colors.white;
+
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardColor,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
+            color: Colors.black.withOpacity(isDark ? 0.2 : 0.06),
             blurRadius: 8,
             offset: const Offset(0, 4),
           ),
@@ -745,25 +675,20 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
                 Container(
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: iconColor.withOpacity(0.1),
+                    color: iconColor.withOpacity(0.12),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(icon, color: iconColor, size: 28),
                 ),
                 const SizedBox(height: 12),
-                Text(
-                  label,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black87,
-                  ),
-                ),
+                Text(label,
+                    style: Theme.of(context)
+                        .textTheme
+                        .titleMedium
+                        ?.copyWith(fontSize: 16)),
                 const SizedBox(height: 4),
-                Text(
-                  subtitle,
-                  style: TextStyle(fontSize: 12, color: Colors.grey[500]),
-                ),
+                Text(subtitle,
+                    style: Theme.of(context).textTheme.bodySmall),
               ],
             ),
           ),
@@ -773,20 +698,14 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
   }
 
   Widget _buildRecentOrdersHeader() {
+    final colorScheme = Theme.of(context).colorScheme;
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          'Pedidos Recientes',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: Colors.grey[800],
-          ),
-        ),
+        _buildSectionTitle('Pedidos Recientes'),
         TextButton(
           onPressed: () => _navigateTo("/gestion_pedidos"),
-          style: TextButton.styleFrom(foregroundColor: Colors.blue),
+          style: TextButton.styleFrom(foregroundColor: colorScheme.primary),
           child: const Row(
             children: [
               Text('Ver todos'),
@@ -801,7 +720,11 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
 
   Widget _buildRecentOrdersList() {
     if (_isLoadingOrders) {
-      return const Center(child: CircularProgressIndicator());
+      return Center(
+        child: CircularProgressIndicator(
+          color: Theme.of(context).colorScheme.primary,
+        ),
+      );
     }
 
     if (_recentOrders.isEmpty) {
@@ -810,16 +733,11 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
           padding: const EdgeInsets.symmetric(vertical: 32),
           child: Column(
             children: [
-              Icon(
-                Icons.shopping_cart_outlined,
-                size: 48,
-                color: Colors.grey[400],
-              ),
+              const Icon(Icons.shopping_cart_outlined,
+                  size: 48, color: AppColors.grey300),
               const SizedBox(height: 16),
-              Text(
-                'No hay pedidos disponibles',
-                style: TextStyle(fontSize: 16, color: Colors.grey[600]),
-              ),
+              Text('No hay pedidos disponibles',
+                  style: Theme.of(context).textTheme.bodyMedium),
             ],
           ),
         ),
@@ -838,7 +756,7 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
               if (i < _recentOrders.length - 1)
                 const Padding(
                   padding: EdgeInsets.symmetric(vertical: 16),
-                  child: Divider(height: 1, color: Color(0xFFE0E0E0)),
+                  child: Divider(height: 1, color: AppColors.grey100),
                 ),
             ],
           ),
