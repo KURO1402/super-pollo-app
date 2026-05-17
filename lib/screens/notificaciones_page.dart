@@ -4,6 +4,7 @@ import 'package:super_pollo_app/models/detalle_pedido_model.dart';
 import 'package:super_pollo_app/models/notificacion_model.dart';
 import 'package:super_pollo_app/services/detalle_pedido_service.dart';
 import 'package:super_pollo_app/utils/notificaciones_state.dart';
+import 'package:super_pollo_app/theme/app_colors.dart';
 
 class NotificacionesPage extends StatefulWidget {
   const NotificacionesPage({super.key});
@@ -31,7 +32,6 @@ class _NotificacionesPage extends State<NotificacionesPage> {
   }
 
   void _actualizar() => setState(() {});
-
   void _limpiarTodo() => _notifState.limpiarTodo();
 
   List<NotificacionModel> get _filtradas {
@@ -65,25 +65,26 @@ class _NotificacionesPage extends State<NotificacionesPage> {
     );
   }
 
+  // Colores semánticos — no cambian con el tema, son señales visuales
   _TipoConfig _getConfig(String tipo) {
     switch (tipo) {
       case 'editar':
         return _TipoConfig(
-          color: Colors.orange,
+          color: AppColors.warning,
           icon: Icons.edit_outlined,
           label: 'Modificado',
           accion: 'Ver Detalles',
         );
       case 'cancelar':
         return _TipoConfig(
-          color: Colors.red,
+          color: AppColors.error,
           icon: Icons.cancel_outlined,
           label: 'Cancelado',
           accion: 'Ver Detalles',
         );
       default:
         return _TipoConfig(
-          color: Colors.blue,
+          color: AppColors.info,
           icon: Icons.receipt_long_outlined,
           label: 'Nuevo Pedido',
           accion: 'Ver Detalles',
@@ -93,39 +94,29 @@ class _NotificacionesPage extends State<NotificacionesPage> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final dividerColor = isDark ? AppColors.navyLight : AppColors.grey100;
+
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black, size: 24),
-          onPressed: () {
-            if (GoRouter.of(context).canPop()) {
-              GoRouter.of(context).pop();
-            } else {
-              GoRouter.of(context).go('/');
-            }
-          },
+          icon: const Icon(Icons.arrow_back, size: 24),
+          onPressed: () => GoRouter.of(context).canPop()
+              ? GoRouter.of(context).pop()
+              : GoRouter.of(context).go('/'),
         ),
         centerTitle: true,
-        title: const Text(
-          'Notificaciones',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: Colors.black,
-          ),
-        ),
+        title: const Text('Notificaciones'),
         actions: [
           TextButton(
             onPressed: _limpiarTodo,
-            child: const Text(
+            child: Text(
               'Limpiar todo',
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
-                color: Colors.blue,
+                color: colorScheme.primary,
               ),
             ),
           ),
@@ -142,30 +133,29 @@ class _NotificacionesPage extends State<NotificacionesPage> {
               // Filtros
               Row(
                 children: [
-                  _buildFilterButton('Todas', 0),
+                  _buildFilterButton('Todas', 0, colorScheme, isDark),
                   const SizedBox(width: 8),
-                  _buildFilterButton('Nuevos', 1),
+                  _buildFilterButton('Nuevos', 1, colorScheme, isDark),
                   const SizedBox(width: 8),
-                  _buildFilterButton('Editados', 2),
+                  _buildFilterButton('Editados', 2, colorScheme, isDark),
                   const SizedBox(width: 8),
-                  _buildFilterButton('Cancelados', 3),
+                  _buildFilterButton('Cancelados', 3, colorScheme, isDark),
                 ],
               ),
 
               const SizedBox(height: 24),
-              Container(height: 1, color: Colors.grey.shade300),
+              Divider(height: 1, color: dividerColor),
               const SizedBox(height: 16),
 
-              const Text(
+              Text(
                 'Hoy',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
-                ),
+                style: Theme.of(context)
+                    .textTheme
+                    .titleMedium
+                    ?.copyWith(fontSize: 18),
               ),
               const SizedBox(height: 8),
-              Container(height: 1, color: Colors.grey.shade300),
+              Divider(height: 1, color: dividerColor),
               const SizedBox(height: 16),
 
               _filtradas.isEmpty
@@ -174,15 +164,12 @@ class _NotificacionesPage extends State<NotificacionesPage> {
                         padding: const EdgeInsets.symmetric(vertical: 40),
                         child: Column(
                           children: [
-                            Icon(
-                              Icons.notifications_off_outlined,
-                              size: 48,
-                              color: Colors.grey.shade300,
-                            ),
+                            const Icon(Icons.notifications_off_outlined,
+                                size: 48, color: AppColors.grey300),
                             const SizedBox(height: 12),
                             Text(
                               'No hay notificaciones',
-                              style: TextStyle(color: Colors.grey.shade500),
+                              style: Theme.of(context).textTheme.bodySmall,
                             ),
                           ],
                         ),
@@ -194,14 +181,12 @@ class _NotificacionesPage extends State<NotificacionesPage> {
                         final notif = entry.value;
                         return Column(
                           children: [
-                            _buildNotificationCard(notif),
+                            _buildNotificationCard(notif, isDark),
                             if (index < _filtradas.length - 1)
-                              const Padding(
-                                padding: EdgeInsets.symmetric(vertical: 16),
-                                child: Divider(
-                                  height: 1,
-                                  color: Color(0xFFE0E0E0),
-                                ),
+                              Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 16),
+                                child: Divider(height: 1, color: dividerColor),
                               ),
                           ],
                         );
@@ -216,18 +201,23 @@ class _NotificacionesPage extends State<NotificacionesPage> {
     );
   }
 
-  Widget _buildFilterButton(String text, int index) {
+  // ── Filtros ──────────────────────────────────────────────────────────────────
+  Widget _buildFilterButton(
+      String text, int index, ColorScheme colorScheme, bool isDark) {
     final isSelected = _selectedFilter == index;
     return Expanded(
       child: GestureDetector(
         onTap: () => setState(() => _selectedFilter = index),
-        child: Container(
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
           height: 36,
           decoration: BoxDecoration(
-            color: isSelected ? Colors.blue : Colors.transparent,
+            color: isSelected ? colorScheme.primary : Colors.transparent,
             borderRadius: BorderRadius.circular(18),
             border: Border.all(
-              color: isSelected ? Colors.blue : Colors.grey.shade300,
+              color: isSelected
+                  ? colorScheme.primary
+                  : (isDark ? AppColors.navyLight : AppColors.grey300),
               width: 1.5,
             ),
           ),
@@ -237,7 +227,9 @@ class _NotificacionesPage extends State<NotificacionesPage> {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
-                color: isSelected ? Colors.white : Colors.black87,
+                color: isSelected
+                    ? Colors.white
+                    : (isDark ? AppColors.grey300 : AppColors.grey700),
               ),
             ),
           ),
@@ -246,17 +238,19 @@ class _NotificacionesPage extends State<NotificacionesPage> {
     );
   }
 
-  Widget _buildNotificationCard(NotificacionModel notif) {
+  // ── Card de notificación ──────────────────────────────────────────────────────
+  Widget _buildNotificationCard(NotificacionModel notif, bool isDark) {
     final config = _getConfig(notif.tipo);
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? AppColors.navyCard : Colors.white,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Título + tiempo
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -266,7 +260,7 @@ class _NotificacionesPage extends State<NotificacionesPage> {
                     Container(
                       padding: const EdgeInsets.all(6),
                       decoration: BoxDecoration(
-                        color: config.color.withOpacity(0.1),
+                        color: config.color.withOpacity(0.12),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Icon(config.icon, size: 16, color: config.color),
@@ -275,11 +269,10 @@ class _NotificacionesPage extends State<NotificacionesPage> {
                     Expanded(
                       child: Text(
                         notif.titulo,
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
-                        ),
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                            ),
                       ),
                     ),
                   ],
@@ -288,11 +281,10 @@ class _NotificacionesPage extends State<NotificacionesPage> {
               const SizedBox(width: 8),
               Text(
                 notif.tiempoRelativo,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey.shade600,
-                  fontWeight: FontWeight.w500,
-                ),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
               ),
             ],
           ),
@@ -301,7 +293,10 @@ class _NotificacionesPage extends State<NotificacionesPage> {
             const SizedBox(height: 10),
             Text(
               notif.contenido,
-              style: TextStyle(fontSize: 14, color: Colors.grey.shade700),
+              style: Theme.of(context)
+                  .textTheme
+                  .bodyMedium
+                  ?.copyWith(fontSize: 14),
             ),
           ],
 
@@ -309,23 +304,23 @@ class _NotificacionesPage extends State<NotificacionesPage> {
             const SizedBox(height: 4),
             Text(
               'Nota: ${notif.nota}',
-              style: TextStyle(
-                fontSize: 13,
-                fontStyle: FontStyle.italic,
-                color: Colors.grey.shade600,
-              ),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    fontSize: 13,
+                    fontStyle: FontStyle.italic,
+                  ),
             ),
           ],
 
           const SizedBox(height: 12),
 
+          // Badge + botón acción
           Row(
             children: [
               Container(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: config.color.withOpacity(0.1),
+                  color: config.color.withOpacity(0.12),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
@@ -338,7 +333,6 @@ class _NotificacionesPage extends State<NotificacionesPage> {
                 ),
               ),
               const Spacer(),
-              // Botón Ver Detalles — solo si tiene idPedido
               if (notif.idPedido != null)
                 GestureDetector(
                   onTap: () => _verDetalle(notif.idPedido!),
@@ -346,7 +340,7 @@ class _NotificacionesPage extends State<NotificacionesPage> {
                     padding: const EdgeInsets.symmetric(
                         horizontal: 16, vertical: 6),
                     decoration: BoxDecoration(
-                      color: config.color.withOpacity(0.1),
+                      color: config.color.withOpacity(0.10),
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(color: config.color, width: 1.5),
                     ),
@@ -368,7 +362,7 @@ class _NotificacionesPage extends State<NotificacionesPage> {
   }
 }
 
-// ─── Modal de detalle ────────────────────────────────────────────────────────
+// ─── Modal de detalle ─────────────────────────────────────────────────────────
 
 class _DetallePedidoModal extends StatefulWidget {
   final int idPedido;
@@ -402,7 +396,7 @@ class _DetallePedidoModalState extends State<_DetallePedidoModal> {
         _detalle = detalle;
         _isLoading = false;
       });
-    } catch (e) {
+    } catch (_) {
       setState(() {
         _error = 'Error al cargar el detalle del pedido';
         _isLoading = false;
@@ -413,27 +407,37 @@ class _DetallePedidoModalState extends State<_DetallePedidoModal> {
   Color _colorEstado(String estado) {
     switch (estado) {
       case 'completado':
-        return Colors.green;
+        return AppColors.success;
       case 'cancelado':
-        return Colors.red;
+        return AppColors.error;
       case 'en_proceso':
-        return Colors.orange;
+        return AppColors.warning;
       default:
-        return Colors.blue;
+        return AppColors.info;
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colorScheme = Theme.of(context).colorScheme;
+    final sheetBg = isDark ? AppColors.navyCard : Colors.white;
+    final handleColor = isDark ? AppColors.navyLight : AppColors.grey100;
+    final dividerColor = isDark ? AppColors.navyLight : AppColors.grey100;
+    final itemBg = isDark
+        ? AppColors.navyLight
+        : AppColors.grey100.withOpacity(0.5);
+    final itemBorderColor = isDark ? AppColors.navyLight : AppColors.grey100;
+
     return DraggableScrollableSheet(
       initialChildSize: 0.6,
       minChildSize: 0.4,
       maxChildSize: 0.9,
       builder: (context, scrollController) {
         return Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.only(
+          decoration: BoxDecoration(
+            color: sheetBg,
+            borderRadius: const BorderRadius.only(
               topLeft: Radius.circular(24),
               topRight: Radius.circular(24),
             ),
@@ -448,7 +452,7 @@ class _DetallePedidoModalState extends State<_DetallePedidoModal> {
                     width: 40,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: Colors.grey.shade300,
+                      color: handleColor,
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -457,50 +461,49 @@ class _DetallePedidoModalState extends State<_DetallePedidoModal> {
 
               // Header
               Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 20, vertical: 16),
                 child: Row(
                   children: [
-                    const Text(
+                    Text(
                       'Detalle del Pedido',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
+                      style: Theme.of(context)
+                          .textTheme
+                          .titleMedium
+                          ?.copyWith(fontSize: 18),
                     ),
                     const Spacer(),
                     Text(
                       '#${widget.idPedido}',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.grey.shade500,
-                      ),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
                     ),
                   ],
                 ),
               ),
 
-              Container(height: 1, color: Colors.grey.shade200),
+              Divider(height: 1, color: dividerColor),
 
               // Contenido
               Expanded(
                 child: _isLoading
-                    ? const Center(
-                        child: CircularProgressIndicator(color: Colors.blue),
+                    ? Center(
+                        child: CircularProgressIndicator(
+                            color: colorScheme.primary),
                       )
                     : _error != null
                         ? Center(
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(Icons.error_outline,
-                                    size: 48, color: Colors.grey.shade400),
+                                const Icon(Icons.error_outline,
+                                    size: 48, color: AppColors.grey300),
                                 const SizedBox(height: 12),
                                 Text(_error!,
-                                    style: TextStyle(
-                                        color: Colors.grey.shade600)),
+                                    style:
+                                        Theme.of(context).textTheme.bodySmall),
                                 const SizedBox(height: 16),
                                 TextButton.icon(
                                   onPressed: _cargarDetalle,
@@ -516,23 +519,23 @@ class _DetallePedidoModalState extends State<_DetallePedidoModal> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                // Estado del pedido
+                                // Estado
                                 Row(
                                   children: [
-                                    const Text(
+                                    Text(
                                       'Estado: ',
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        color: Colors.black54,
-                                      ),
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodySmall
+                                          ?.copyWith(fontSize: 14),
                                     ),
                                     Container(
                                       padding: const EdgeInsets.symmetric(
                                           horizontal: 10, vertical: 4),
                                       decoration: BoxDecoration(
-                                        color: _colorEstado(_detalle!
-                                                .estadoPedido)
-                                            .withOpacity(0.1),
+                                        color: _colorEstado(
+                                                _detalle!.estadoPedido)
+                                            .withOpacity(0.12),
                                         borderRadius:
                                             BorderRadius.circular(20),
                                       ),
@@ -554,18 +557,18 @@ class _DetallePedidoModalState extends State<_DetallePedidoModal> {
                                 // Mesas
                                 Row(
                                   children: [
-                                    const Icon(
-                                        Icons.table_restaurant_rounded,
-                                        size: 18,
-                                        color: Colors.blue),
+                                    Icon(Icons.table_restaurant_rounded,
+                                        size: 18, color: colorScheme.primary),
                                     const SizedBox(width: 8),
                                     Text(
                                       'Mesas: ${_detalle!.mesas.map((m) => 'Mesa ${m.numeroMesa}').join(', ')}',
-                                      style: const TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w600,
-                                        color: Colors.black87,
-                                      ),
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyMedium
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.w600,
+                                            fontSize: 14,
+                                          ),
                                     ),
                                   ],
                                 ),
@@ -573,13 +576,12 @@ class _DetallePedidoModalState extends State<_DetallePedidoModal> {
                                 const SizedBox(height: 20),
 
                                 // Productos
-                                const Text(
+                                Text(
                                   'Productos',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.black87,
-                                  ),
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .titleMedium
+                                      ?.copyWith(fontSize: 16),
                                 ),
                                 const SizedBox(height: 12),
 
@@ -588,10 +590,10 @@ class _DetallePedidoModalState extends State<_DetallePedidoModal> {
                                     margin: const EdgeInsets.only(bottom: 10),
                                     padding: const EdgeInsets.all(14),
                                     decoration: BoxDecoration(
-                                      color: Colors.grey.shade50,
+                                      color: itemBg,
                                       borderRadius: BorderRadius.circular(10),
-                                      border: Border.all(
-                                          color: Colors.grey.shade200),
+                                      border:
+                                          Border.all(color: itemBorderColor),
                                     ),
                                     child: Row(
                                       children: [
@@ -599,18 +601,18 @@ class _DetallePedidoModalState extends State<_DetallePedidoModal> {
                                           width: 36,
                                           height: 36,
                                           decoration: BoxDecoration(
-                                            color: Colors.blue
-                                                .withOpacity(0.1),
+                                            color: colorScheme.primary
+                                                .withOpacity(0.10),
                                             borderRadius:
                                                 BorderRadius.circular(8),
                                           ),
                                           child: Center(
                                             child: Text(
                                               '${item.cantidadPedido}x',
-                                              style: const TextStyle(
+                                              style: TextStyle(
                                                 fontSize: 13,
                                                 fontWeight: FontWeight.bold,
-                                                color: Colors.blue,
+                                                color: colorScheme.primary,
                                               ),
                                             ),
                                           ),
@@ -619,17 +621,19 @@ class _DetallePedidoModalState extends State<_DetallePedidoModal> {
                                         Expanded(
                                           child: Text(
                                             item.nombreProducto,
-                                            style: const TextStyle(
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.w500,
-                                              color: Colors.black87,
-                                            ),
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .bodyMedium
+                                                ?.copyWith(
+                                                  fontWeight: FontWeight.w500,
+                                                  fontSize: 14,
+                                                ),
                                           ),
                                         ),
                                       ],
                                     ),
                                   );
-                                }).toList(),
+                                }),
                               ],
                             ),
                           ),
@@ -642,7 +646,6 @@ class _DetallePedidoModalState extends State<_DetallePedidoModal> {
   }
 }
 
-// ─── Config visual ────────────────────────────────────────────────────────────
 
 class _TipoConfig {
   final Color color;
