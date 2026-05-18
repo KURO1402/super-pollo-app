@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:super_pollo_app/theme/app_colors.dart';
 
 class MenuItemWidget extends StatelessWidget {
   final String itemName;
@@ -22,31 +23,37 @@ class MenuItemWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final screenW = MediaQuery.of(context).size.width;
     final isSmall = screenW < 360;
 
-    final double imgSize = isSmall ? 70 : 85;
-    final double nameFontSize = isSmall ? 13 : 15;
-    final double descFontSize = isSmall ? 11 : 13;
-    final double priceFontSize = isSmall ? 13 : 15;
-    final double hMargin = isSmall ? 6 : 12;
-    final double vMargin = isSmall ? 4 : 6;
-    final double padding = isSmall ? 8 : 12;
-    final double innerGap = isSmall ? 8 : 12;
-    final double btnSize = isSmall ? 26 : 30;
-    final double btnIconSize = isSmall ? 15 : 18;
+    // Tamaños responsivos (sin cambios)
+    final double imgSize       = isSmall ? 70  : 85;
+    final double nameFontSize  = isSmall ? 13  : 15;
+    final double descFontSize  = isSmall ? 11  : 13;
+    final double priceFontSize = isSmall ? 13  : 15;
+    final double hMargin       = isSmall ? 6   : 12;
+    final double vMargin       = isSmall ? 4   : 6;
+    final double padding       = isSmall ? 8   : 12;
+    final double innerGap      = isSmall ? 8   : 12;
+    final double btnSize       = isSmall ? 26  : 30;
+    final double btnIconSize   = isSmall ? 15  : 18;
     final double counterFontSize = isSmall ? 13 : 15;
-    final double counterHPad = isSmall ? 6 : 10;
+    final double counterHPad   = isSmall ? 6   : 10;
+
+    final cardBg = isDark ? AppColors.navyCard : Colors.white;
+    final imageFallbackBg = isDark ? AppColors.navyLight : AppColors.grey100;
+    final imageFallbackIcon = isDark ? AppColors.grey500 : AppColors.grey300;
 
     return Container(
       margin: EdgeInsets.symmetric(vertical: vMargin, horizontal: hMargin),
       padding: EdgeInsets.all(padding),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardBg,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withOpacity(isDark ? 0.2 : 0.05),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -55,6 +62,7 @@ class MenuItemWidget extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
+          // Imagen del producto
           ClipRRect(
             borderRadius: BorderRadius.circular(10),
             child: images.isNotEmpty
@@ -63,30 +71,22 @@ class MenuItemWidget extends StatelessWidget {
                     width: imgSize,
                     height: imgSize,
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
-                      width: imgSize,
-                      height: imgSize,
-                      color: Colors.grey[200],
-                      child: Icon(
-                        Icons.fastfood_rounded,
-                        color: Colors.grey[400],
-                        size: imgSize * 0.4,
-                      ),
+                    errorBuilder: (_, __, ___) => _ImageFallback(
+                      size: imgSize,
+                      bgColor: imageFallbackBg,
+                      iconColor: imageFallbackIcon,
                     ),
                   )
-                : Container(
-                    width: imgSize,
-                    height: imgSize,
-                    color: Colors.grey[200],
-                    child: Icon(
-                      Icons.fastfood_rounded,
-                      color: Colors.grey[400],
-                      size: imgSize * 0.4,
-                    ),
+                : _ImageFallback(
+                    size: imgSize,
+                    bgColor: imageFallbackBg,
+                    iconColor: imageFallbackIcon,
                   ),
           ),
+
           SizedBox(width: innerGap),
 
+          // Info del producto
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -94,20 +94,19 @@ class MenuItemWidget extends StatelessWidget {
               children: [
                 Text(
                   itemName,
-                  style: TextStyle(
-                    fontSize: nameFontSize,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        fontSize: nameFontSize,
+                        fontWeight: FontWeight.bold,
+                      ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 2),
                 Text(
                   description,
-                  style: TextStyle(
-                    fontSize: descFontSize,
-                    color: Colors.grey.shade400,
-                  ),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        fontSize: descFontSize,
+                      ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -117,7 +116,7 @@ class MenuItemWidget extends StatelessWidget {
                   style: TextStyle(
                     fontSize: priceFontSize,
                     fontWeight: FontWeight.bold,
-                    color: const Color(0xFF1565C0),
+                    color: Theme.of(context).colorScheme.primary,
                   ),
                 ),
               ],
@@ -126,7 +125,7 @@ class MenuItemWidget extends StatelessWidget {
 
           SizedBox(width: isSmall ? 6 : 8),
 
-          // 3. Contador
+          // Contador
           _CounterWidget(
             quantity: quantity,
             onIncrementar: onIncrementar,
@@ -142,6 +141,30 @@ class MenuItemWidget extends StatelessWidget {
   }
 }
 
+// ── Fallback de imagen ────────────────────────────────────────────────────────
+class _ImageFallback extends StatelessWidget {
+  final double size;
+  final Color bgColor;
+  final Color iconColor;
+
+  const _ImageFallback({
+    required this.size,
+    required this.bgColor,
+    required this.iconColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      color: bgColor,
+      child: Icon(Icons.fastfood_rounded, color: iconColor, size: size * 0.4),
+    );
+  }
+}
+
+// ── Contador ──────────────────────────────────────────────────────────────────
 class _CounterWidget extends StatelessWidget {
   final int quantity;
   final VoidCallback onIncrementar;
@@ -163,10 +186,13 @@ class _CounterWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final containerBg = isDark ? AppColors.navyLight : AppColors.grey100;
+
     return Container(
       padding: EdgeInsets.symmetric(horizontal: hPadding * 0.4, vertical: 4),
       decoration: BoxDecoration(
-        color: const Color(0xFFF5F5F5),
+        color: containerBg,
         borderRadius: BorderRadius.circular(10),
       ),
       child: Row(
@@ -185,10 +211,10 @@ class _CounterWidget extends StatelessWidget {
             padding: EdgeInsets.symmetric(horizontal: hPadding * 0.6),
             child: Text(
               '$quantity',
-              style: TextStyle(
-                fontSize: counterFontSize,
-                fontWeight: FontWeight.bold,
-              ),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    fontSize: counterFontSize,
+                    fontWeight: FontWeight.bold,
+                  ),
             ),
           ),
           GestureDetector(
@@ -206,6 +232,7 @@ class _CounterWidget extends StatelessWidget {
   }
 }
 
+// ── Botón +/- ─────────────────────────────────────────────────────────────────
 class _ActionButton extends StatelessWidget {
   final IconData icon;
   final bool isPrimary;
@@ -221,26 +248,34 @@ class _ActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colorScheme = Theme.of(context).colorScheme;
+
+    // Botón "+" → color de marca; botón "-" → superficie neutra
+    final bgColor = isPrimary
+        ? colorScheme.primary
+        : (isDark ? AppColors.navyCard : Colors.white);
+
+    final iconColor = isPrimary
+        ? Colors.white
+        : colorScheme.primary;
+
     return Container(
       width: size,
       height: size,
       decoration: BoxDecoration(
-        color: isPrimary ? const Color(0xFF1565C0) : Colors.white,
+        color: bgColor,
         borderRadius: BorderRadius.circular(8),
         boxShadow: [
           if (!isPrimary)
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: Colors.black.withOpacity(isDark ? 0.25 : 0.10),
               blurRadius: 2,
               offset: const Offset(0, 1),
             ),
         ],
       ),
-      child: Icon(
-        icon,
-        size: iconSize,
-        color: isPrimary ? Colors.white : const Color(0xFF1565C0),
-      ),
+      child: Icon(icon, size: iconSize, color: iconColor),
     );
   }
 }

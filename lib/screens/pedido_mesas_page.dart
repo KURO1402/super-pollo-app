@@ -357,7 +357,6 @@ class _FilterRow extends StatelessWidget {
   }
 }
 
-// ── Grid de mesas ─────────────────────────────────────────────────────────────
 class _MesasGrid extends StatelessWidget {
   final bool isLoading;
   final String? error;
@@ -441,7 +440,6 @@ class _MesasGrid extends StatelessWidget {
   }
 }
 
-// ── Chip de mesas seleccionadas ───────────────────────────────────────────────
 class _MesasSeleccionadasChip extends StatelessWidget {
   final List<MesaModel> mesasSeleccionadas;
   const _MesasSeleccionadasChip({required this.mesasSeleccionadas});
@@ -496,8 +494,6 @@ class _MesasSeleccionadasChip extends StatelessWidget {
     );
   }
 }
-
-// ── Botón continuar ───────────────────────────────────────────────────────────
 class _ContinuarButton extends StatelessWidget {
   final bool enabled;
   final VoidCallback onPressed;
@@ -505,7 +501,6 @@ class _ContinuarButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Usa el ElevatedButton del tema directamente — hereda colores y shape
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton(

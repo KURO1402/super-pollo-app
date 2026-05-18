@@ -3,10 +3,10 @@ import 'package:go_router/go_router.dart';
 import 'package:super_pollo_app/services/pedidos_service.dart';
 import 'package:super_pollo_app/state/pedido_flow_state.dart';
 import 'package:super_pollo_app/widgets/pedido_stepper.dart';
+import 'package:super_pollo_app/theme/app_colors.dart';
 
 class PedidoResumenPage extends StatefulWidget {
   final PedidoFlowState flowState;
-
   const PedidoResumenPage({super.key, required this.flowState});
 
   @override
@@ -24,8 +24,7 @@ class _PedidoResumenPageState extends State<PedidoResumenPage> {
   Future<void> _confirmarPedido() async {
     setState(() => _isLoading = true);
     try {
-      final pedidosService = PedidosService();
-      await pedidosService.insertarPedido(
+      await PedidosService().insertarPedido(
         mesas: widget.flowState.mesas.map((m) => {'idMesa': m.idMesa}).toList(),
         productos: widget.flowState.productos,
       );
@@ -33,7 +32,7 @@ class _PedidoResumenPageState extends State<PedidoResumenPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Pedido registrado exitosamente'),
-            backgroundColor: Colors.green,
+            backgroundColor: AppColors.success,
           ),
         );
         context.go('/menu_principal');
@@ -43,7 +42,7 @@ class _PedidoResumenPageState extends State<PedidoResumenPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error al registrar el pedido: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.error,
           ),
         );
       }
@@ -67,41 +66,25 @@ class _PedidoResumenPageState extends State<PedidoResumenPage> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colorScheme = Theme.of(context).colorScheme;
     final screenWidth = MediaQuery.of(context).size.width;
     final isSmallScreen = screenWidth < 380;
     final horizontalPadding = screenWidth < 360 ? 16.0 : 20.0;
     final cardPadding = isSmallScreen ? 12.0 : 16.0;
+    final bottomBarBg = isDark ? AppColors.navyCard : Colors.white;
+    final dividerColor = isDark ? AppColors.navyLight : AppColors.grey300;
 
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        surfaceTintColor: Colors.transparent,
         leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back_ios_new_rounded,
-            color: Color(0xFF1A1A1A),
-            size: 20,
-          ),
-          onPressed: () {
-            if (GoRouter.of(context).canPop()) {
-              GoRouter.of(context).pop();
-            } else {
-              GoRouter.of(context).go('/menu_principal');
-            }
-          },
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
+          onPressed: () => GoRouter.of(context).canPop()
+              ? GoRouter.of(context).pop()
+              : GoRouter.of(context).go('/menu_principal'),
         ),
         centerTitle: true,
-        title: const Text(
-          'Nuevo Pedido',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-            color: Color(0xFF1A1A1A),
-            letterSpacing: -0.5,
-          ),
-        ),
+        title: const Text('Nuevo Pedido'),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(72),
           child: PedidoStepper(
@@ -113,44 +96,45 @@ class _PedidoResumenPageState extends State<PedidoResumenPage> {
       ),
       body: Column(
         children: [
+          // ── Contenido ──────────────────────────────────────────────────────
           Expanded(
             child: SingleChildScrollView(
               physics: const BouncingScrollPhysics(),
-              padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+              padding:
+                  EdgeInsets.symmetric(horizontal: horizontalPadding),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 20),
 
-                  _buildSectionHeader('Mesas'),
+                  _buildSectionHeader('Mesas', colorScheme),
                   const SizedBox(height: 12),
-                  _buildMesasCard(cardPadding, isSmallScreen),
+                  _buildMesasCard(cardPadding, isSmallScreen, isDark, colorScheme),
 
                   const SizedBox(height: 24),
-                  Divider(color: Colors.grey.shade300),
+                  Divider(color: dividerColor),
                   const SizedBox(height: 16),
 
-                  _buildSectionHeader('Resumen'),
+                  _buildSectionHeader('Resumen', colorScheme),
                   const SizedBox(height: 16),
 
                   ...widget.flowState.productos.map((p) {
                     final subtotal = ((p['precio'] ?? 0) * (p['cantidad'] ?? 0)) as double;
-                    final nombre = p['nombre'] ?? 'Producto';
-                    final cantidad = p['cantidad'] ?? 0;
-                    
                     return _buildProductoItem(
-                      nombre: nombre,
-                      cantidad: cantidad,
+                      nombre: p['nombre'] ?? 'Producto',
+                      cantidad: p['cantidad'] ?? 0,
                       subtotal: subtotal,
                       isSmallScreen: isSmallScreen,
+                      isDark: isDark,
+                      colorScheme: colorScheme,
                     );
                   }),
 
                   const SizedBox(height: 20),
-                  Divider(color: Colors.grey.shade400),
+                  Divider(color: isDark ? AppColors.navyLight : AppColors.grey500.withOpacity(0.4)),
                   const SizedBox(height: 14),
 
-                  _buildTotal(isSmallScreen),
+                  _buildTotal(isSmallScreen, colorScheme),
 
                   const SizedBox(height: 32),
                 ],
@@ -158,6 +142,7 @@ class _PedidoResumenPageState extends State<PedidoResumenPage> {
             ),
           ),
 
+          // ── Botón confirmar ────────────────────────────────────────────────
           Container(
             padding: EdgeInsets.fromLTRB(
               horizontalPadding,
@@ -166,10 +151,10 @@ class _PedidoResumenPageState extends State<PedidoResumenPage> {
               MediaQuery.of(context).padding.bottom + 16,
             ),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: bottomBarBg,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color: Colors.black.withOpacity(isDark ? 0.25 : 0.05),
                   blurRadius: 10,
                   offset: const Offset(0, -4),
                 ),
@@ -177,21 +162,9 @@ class _PedidoResumenPageState extends State<PedidoResumenPage> {
             ),
             child: SizedBox(
               width: double.infinity,
+              // ElevatedButton hereda el estilo completo del AppTheme
               child: ElevatedButton(
                 onPressed: _isLoading ? null : _confirmarPedido,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF1565C0),
-                  foregroundColor: Colors.white,
-                  padding: EdgeInsets.symmetric(
-                    vertical: isSmallScreen ? 14 : 16,
-                    horizontal: 16,
-                  ),
-                  elevation: 4,
-                  shadowColor: const Color(0xFF1565C0).withOpacity(0.4),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                ),
                 child: _isLoading
                     ? const SizedBox(
                         height: 22,
@@ -217,114 +190,113 @@ class _PedidoResumenPageState extends State<PedidoResumenPage> {
     );
   }
 
-  Widget _buildSectionHeader(String title) {
+  // ── Header de sección ────────────────────────────────────────────────────────
+  Widget _buildSectionHeader(String title, ColorScheme colorScheme) {
     return Row(
       children: [
         Container(
           width: 4,
           height: 20,
           decoration: BoxDecoration(
-            color: const Color(0xFF1565C0),
+            color: colorScheme.primary,
             borderRadius: BorderRadius.circular(2),
           ),
         ),
         const SizedBox(width: 10),
         Text(
           title,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: Colors.black87,
-          ),
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(fontSize: 16),
         ),
       ],
     );
   }
 
-  Widget _buildMesasCard(double cardPadding, bool isSmallScreen) {
+  // ── Card de mesas ────────────────────────────────────────────────────────────
+  Widget _buildMesasCard(
+    double cardPadding,
+    bool isSmallScreen,
+    bool isDark,
+    ColorScheme colorScheme,
+  ) {
+    final cardBg = isDark ? AppColors.navyCard : Colors.white;
+    final borderColor = isDark ? AppColors.navyLight : AppColors.grey300;
+
     return Container(
       padding: EdgeInsets.all(cardPadding),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardBg,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade300),
+        border: Border.all(color: borderColor),
       ),
       child: LayoutBuilder(
         builder: (context, constraints) {
+          final mesasText = widget.flowState.mesas.map((m) => m.nombre).join(', ');
+          final nameStyle = Theme.of(context).textTheme.bodyMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+                fontSize: constraints.maxWidth < 300 ? 14 : 15,
+              );
+
           if (constraints.maxWidth < 300) {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  widget.flowState.mesas.map((m) => m.nombre).join(', '),
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black87,
-                  ),
-                ),
+                Text(mesasText, style: nameStyle),
                 const SizedBox(height: 12),
-                _buildCambiarButton(),
-              ],
-            );
-          } else {
-            return Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Text(
-                    widget.flowState.mesas.map((m) => m.nombre).join(', '),
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black87,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                _buildCambiarButton(),
+                _buildCambiarButton(colorScheme),
               ],
             );
           }
+          return Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Text(mesasText,
+                    style: nameStyle, overflow: TextOverflow.ellipsis),
+              ),
+              const SizedBox(width: 12),
+              _buildCambiarButton(colorScheme),
+            ],
+          );
         },
       ),
     );
   }
 
-  Widget _buildCambiarButton() {
+  Widget _buildCambiarButton(ColorScheme colorScheme) {
     return GestureDetector(
       onTap: () => _navigateToStep(0),
       child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 14,
-          vertical: 7,
-        ),
+        padding:
+            const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
         decoration: BoxDecoration(
-          color: const Color(0xFF1565C0).withOpacity(0.08),
+          color: colorScheme.primary.withOpacity(0.08),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: const Color(0xFF1565C0).withOpacity(0.4),
-          ),
+          border: Border.all(color: colorScheme.primary.withOpacity(0.4)),
         ),
-        child: const Text(
+        child: Text(
           'Cambiar',
           style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w600,
-            color: Color(0xFF1565C0),
+            color: colorScheme.primary,
           ),
         ),
       ),
     );
   }
 
+  // ── Item de producto ─────────────────────────────────────────────────────────
   Widget _buildProductoItem({
     required String nombre,
     required int cantidad,
     required double subtotal,
     required bool isSmallScreen,
+    required bool isDark,
+    required ColorScheme colorScheme,
   }) {
+    final cardBg = isDark ? AppColors.navyCard : Colors.white;
+    final borderColor = isDark ? AppColors.navyLight : AppColors.grey100;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: EdgeInsets.symmetric(
@@ -332,12 +304,12 @@ class _PedidoResumenPageState extends State<PedidoResumenPage> {
         vertical: isSmallScreen ? 10 : 12,
       ),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardBg,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: borderColor),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withOpacity(isDark ? 0.2 : 0.03),
             blurRadius: 6,
             offset: const Offset(0, 2),
           ),
@@ -345,113 +317,90 @@ class _PedidoResumenPageState extends State<PedidoResumenPage> {
       ),
       child: LayoutBuilder(
         builder: (context, constraints) {
+          final precioText = 'S/ ${subtotal.toStringAsFixed(2)}';
+          final precioStyle = Theme.of(context).textTheme.bodyMedium?.copyWith(
+                fontSize: isSmallScreen ? 14 : 15,
+                fontWeight: FontWeight.w700,
+              );
+          final nombreStyle = Theme.of(context).textTheme.bodyMedium?.copyWith(
+                fontSize: isSmallScreen ? 14 : 15,
+                fontWeight: FontWeight.w500,
+              );
+
           if (constraints.maxWidth < 280) {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   children: [
-                    _buildCantidadBadge(cantidad),
+                    _buildCantidadBadge(cantidad, colorScheme),
                     const SizedBox(width: 8),
                     Expanded(
-                      child: Text(
-                        nombre,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.black87,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
+                      child: Text(nombre,
+                          style: nombreStyle,
+                          overflow: TextOverflow.ellipsis),
                     ),
                   ],
                 ),
                 const SizedBox(height: 8),
                 Align(
                   alignment: Alignment.centerRight,
-                  child: Text(
-                    'S/ ${subtotal.toStringAsFixed(2)}',
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.black87,
-                    ),
-                  ),
-                ),
-              ],
-            );
-          } else {
-            return Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Flexible(
-                  child: Row(
-                    children: [
-                      _buildCantidadBadge(cantidad),
-                      const SizedBox(width: 10),
-                      Flexible(
-                        child: Text(
-                          nombre,
-                          style: TextStyle(
-                            fontSize: isSmallScreen ? 14 : 15,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.black87,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Text(
-                  'S/ ${subtotal.toStringAsFixed(2)}',
-                  style: TextStyle(
-                    fontSize: isSmallScreen ? 14 : 15,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.black87,
-                  ),
+                  child: Text(precioText, style: precioStyle),
                 ),
               ],
             );
           }
+          return Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Flexible(
+                child: Row(
+                  children: [
+                    _buildCantidadBadge(cantidad, colorScheme),
+                    const SizedBox(width: 10),
+                    Flexible(
+                      child: Text(nombre,
+                          style: nombreStyle,
+                          overflow: TextOverflow.ellipsis),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              Text(precioText, style: precioStyle),
+            ],
+          );
         },
       ),
     );
   }
 
-  Widget _buildCantidadBadge(int cantidad) {
+  Widget _buildCantidadBadge(int cantidad, ColorScheme colorScheme) {
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 8,
-        vertical: 4,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: const Color(0xFF1565C0).withOpacity(0.1),
+        color: colorScheme.primary.withOpacity(0.10),
         borderRadius: BorderRadius.circular(6),
       ),
       child: Text(
         '×$cantidad',
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 13,
           fontWeight: FontWeight.w700,
-          color: Color(0xFF1565C0),
+          color: colorScheme.primary,
         ),
       ),
     );
   }
 
-  Widget _buildTotal(bool isSmallScreen) {
+  // ── Total ────────────────────────────────────────────────────────────────────
+  Widget _buildTotal(bool isSmallScreen, ColorScheme colorScheme) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        const Text(
+        Text(
           'Total',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: Colors.black87,
-          ),
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(fontSize: 18),
         ),
         Flexible(
           child: Text(
@@ -459,7 +408,7 @@ class _PedidoResumenPageState extends State<PedidoResumenPage> {
             style: TextStyle(
               fontSize: isSmallScreen ? 18 : 20,
               fontWeight: FontWeight.bold,
-              color: const Color(0xFF1565C0),
+              color: colorScheme.primary,
             ),
             textAlign: TextAlign.right,
             overflow: TextOverflow.ellipsis,

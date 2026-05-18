@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:super_pollo_app/services/listar_pedidos_service.dart';
 import 'package:super_pollo_app/models/listar_pedidos_model.dart';
 import 'package:super_pollo_app/widgets/pedidos_widget.dart';
+import 'package:super_pollo_app/theme/app_colors.dart';
 
 class GestionPedidosPage extends StatefulWidget {
   const GestionPedidosPage({super.key});
@@ -12,7 +13,7 @@ class GestionPedidosPage extends StatefulWidget {
 }
 
 class _GestionPedidosPageState extends State<GestionPedidosPage> {
-  int _selectedTab = 0; // 0: Todos, 1: Pendientes
+  int _selectedTab = 0;
   bool _isLoading = false;
   String? _errorMessage;
   List<Pedido> _allPedidos = [];
@@ -23,34 +24,26 @@ class _GestionPedidosPageState extends State<GestionPedidosPage> {
     _cargarPedidos();
   }
 
-  /// Obtiene la fecha y hora actual en los formatos requeridos
   void _cargarPedidos() async {
     setState(() {
       _isLoading = true;
       _errorMessage = null;
     });
-
     try {
       final ahora = DateTime.now();
       final fecha =
           '${ahora.year}-${ahora.month.toString().padLeft(2, '0')}-${ahora.day.toString().padLeft(2, '0')}';
       final hora =
           '${ahora.hour.toString().padLeft(2, '0')}:${ahora.minute.toString().padLeft(2, '0')}';
-
-      final response = await PedidosService.listarPedidos(
-        fecha: fecha,
-        hora: hora,
-      );
-
+      final response = await PedidosService.listarPedidos(fecha: fecha, hora: hora);
       if (mounted) {
         setState(() {
           if (response.ok) {
             _allPedidos = response.pedidos;
-            _isLoading = false;
           } else {
             _errorMessage = 'Error al obtener pedidos';
-            _isLoading = false;
           }
+          _isLoading = false;
         });
       }
     } catch (e) {
@@ -63,18 +56,10 @@ class _GestionPedidosPageState extends State<GestionPedidosPage> {
     }
   }
 
-  /// Filtra pedidos según la pestaña seleccionada
-  List<Pedido> _getPedidosFiltrados() {
-    if (_selectedTab == 0) {
-      return _allPedidos; // Todos
-    } else {
-      return _allPedidos
-          .where((p) => p.estadoPedido == 'pendiente')
-          .toList(); // Pendientes
-    }
-  }
+  List<Pedido> _getPedidosFiltrados() => _selectedTab == 0
+      ? _allPedidos
+      : _allPedidos.where((p) => p.estadoPedido == 'pendiente').toList();
 
-  /// Muestra el modal con detalles del pedido
   void _showOrderDetails(Pedido pedido) {
     showModalBottomSheet(
       context: context,
@@ -86,32 +71,22 @@ class _GestionPedidosPageState extends State<GestionPedidosPage> {
 
   @override
   Widget build(BuildContext context) {
-    final pedidosFiltrados = _getPedidosFiltrados();
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final pendientesCount =
+        _allPedidos.where((p) => p.estadoPedido == 'pendiente').length;
 
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black, size: 24),
-          onPressed: () {
-            context.go('/menu_principal');
-          },
+          icon: const Icon(Icons.arrow_back, size: 24),
+          onPressed: () => context.go('/menu_principal'),
         ),
         centerTitle: true,
-        title: const Text(
-          'Gestión de Pedidos',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: Colors.black,
-          ),
-        ),
+        title: const Text('Gestión de Pedidos'),
         actions: [
-          // Botón para refrescar
           IconButton(
-            icon: const Icon(Icons.refresh, color: Colors.blue),
+            icon: Icon(Icons.refresh, color: colorScheme.primary),
             onPressed: _cargarPedidos,
           ),
         ],
@@ -124,23 +99,29 @@ class _GestionPedidosPageState extends State<GestionPedidosPage> {
             children: [
               const SizedBox(height: 10),
 
-              // Pestañas Todos | Pendientes
+              // Pestañas
               Row(
                 children: [
-                  _buildOrderTab('Todos (${_allPedidos.length})', 0),
+                  _buildOrderTab(
+                    'Todos (${_allPedidos.length})',
+                    0,
+                    colorScheme,
+                    isDark,
+                  ),
                   const SizedBox(width: 16),
                   _buildOrderTab(
-                    'Pendientes (${_allPedidos.where((p) => p.estadoPedido == 'pendiente').length})',
+                    'Pendientes ($pendientesCount)',
                     1,
+                    colorScheme,
+                    isDark,
                   ),
                 ],
               ),
 
               const SizedBox(height: 24),
 
-              // Lista de pedidos
               OrderListWidget(
-                pedidos: pedidosFiltrados,
+                pedidos: _getPedidosFiltrados(),
                 isLoading: _isLoading,
                 errorMessage: _errorMessage,
                 onOrderTap: _showOrderDetails,
@@ -152,24 +133,22 @@ class _GestionPedidosPageState extends State<GestionPedidosPage> {
     );
   }
 
-  /// Widget para pestañas
-  Widget _buildOrderTab(String text, int index) {
+  Widget _buildOrderTab(
+      String text, int index, ColorScheme colorScheme, bool isDark) {
     final isSelected = _selectedTab == index;
-
     return Expanded(
       child: GestureDetector(
-        onTap: () {
-          setState(() {
-            _selectedTab = index;
-          });
-        },
-        child: Container(
+        onTap: () => setState(() => _selectedTab = index),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
           height: 40,
           decoration: BoxDecoration(
-            color: isSelected ? Colors.blue : Colors.grey.shade100,
+            color: isSelected
+                ? colorScheme.primary
+                : (isDark ? AppColors.navyLight : AppColors.grey100),
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
-              color: isSelected ? Colors.blue : Colors.transparent,
+              color: isSelected ? colorScheme.primary : Colors.transparent,
               width: 1.5,
             ),
           ),
@@ -179,7 +158,9 @@ class _GestionPedidosPageState extends State<GestionPedidosPage> {
               style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w500,
-                color: isSelected ? Colors.white : Colors.black87,
+                color: isSelected
+                    ? Colors.white
+                    : (isDark ? AppColors.grey300 : AppColors.grey700),
               ),
             ),
           ),

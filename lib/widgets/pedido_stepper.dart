@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:super_pollo_app/theme/app_colors.dart';
 
 class PedidoStep {
   final String label;
   final IconData icon;
-
   const PedidoStep({required this.label, required this.icon});
 }
 
@@ -25,25 +25,27 @@ class PedidoStepper extends StatelessWidget {
     this.onStepTapped,
   });
 
-  bool _isAccessible(int index) {
-    return index == currentStep || completedSteps.contains(index);
-  }
+  bool _isAccessible(int index) =>
+      index == currentStep || completedSteps.contains(index);
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bgColor = isDark ? AppColors.navyCard : Colors.white;
+    final borderColor = isDark ? AppColors.navyLight : const Color(0xFFEEEEEE);
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(bottom: BorderSide(color: Color(0xFFEEEEEE))),
+      decoration: BoxDecoration(
+        color: bgColor,
+        border: Border(bottom: BorderSide(color: borderColor)),
       ),
       child: Row(
         children: List.generate(kPedidoSteps.length * 2 - 1, (i) {
           if (i.isOdd) {
             final leftStep = i ~/ 2;
             final rightStep = leftStep + 1;
-            final isConnected =
-                completedSteps.contains(leftStep) ||
+            final isConnected = completedSteps.contains(leftStep) ||
                 completedSteps.contains(rightStep);
             return Expanded(
               child: AnimatedContainer(
@@ -51,8 +53,8 @@ class PedidoStepper extends StatelessWidget {
                 height: 2,
                 decoration: BoxDecoration(
                   color: isConnected
-                      ? const Color(0xFF1565C0)
-                      : const Color(0xFFE0E0E0),
+                      ? Theme.of(context).colorScheme.primary
+                      : (isDark ? AppColors.navyLight : const Color(0xFFE0E0E0)),
                   borderRadius: BorderRadius.circular(1),
                 ),
               ),
@@ -67,7 +69,6 @@ class PedidoStepper extends StatelessWidget {
 
           return _StepBubble(
             step: step,
-            stepIndex: stepIndex,
             isCurrent: isCurrent,
             isCompleted: isCompleted,
             isAccessible: accessible,
@@ -83,7 +84,6 @@ class PedidoStepper extends StatelessWidget {
 
 class _StepBubble extends StatelessWidget {
   final PedidoStep step;
-  final int stepIndex;
   final bool isCurrent;
   final bool isCompleted;
   final bool isAccessible;
@@ -91,7 +91,6 @@ class _StepBubble extends StatelessWidget {
 
   const _StepBubble({
     required this.step,
-    required this.stepIndex,
     required this.isCurrent,
     required this.isCompleted,
     required this.isAccessible,
@@ -100,22 +99,27 @@ class _StepBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Color bubbleColor;
-    Color iconColor;
-    Color labelColor;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colorScheme = Theme.of(context).colorScheme;
+
+    // Colores de burbuja según estado
+    final Color bubbleColor;
+    final Color iconColor;
+    final Color labelColor;
 
     if (isCurrent) {
-      bubbleColor = const Color(0xFF1565C0);
+      bubbleColor = colorScheme.primary;
       iconColor = Colors.white;
-      labelColor = const Color(0xFF1565C0);
+      labelColor = colorScheme.primary;
     } else if (isCompleted) {
-      bubbleColor = const Color(0xFF1565C0).withOpacity(0.12);
-      iconColor = const Color(0xFF1565C0);
-      labelColor = const Color(0xFF1565C0);
+      bubbleColor = colorScheme.primary.withOpacity(0.12);
+      iconColor = colorScheme.primary;
+      labelColor = colorScheme.primary;
     } else {
-      bubbleColor = const Color(0xFFF0F0F0);
-      iconColor = const Color(0xFFBDBDBD);
-      labelColor = const Color(0xFFBDBDBD);
+      // Paso inactivo — se adapta al tema
+      bubbleColor = isDark ? AppColors.navyLight : const Color(0xFFF0F0F0);
+      iconColor = isDark ? AppColors.grey500 : AppColors.grey300;
+      labelColor = isDark ? AppColors.grey500 : AppColors.grey300;
     }
 
     return GestureDetector(
@@ -134,7 +138,7 @@ class _StepBubble extends StatelessWidget {
               boxShadow: isCurrent
                   ? [
                       BoxShadow(
-                        color: const Color(0xFF1565C0).withOpacity(0.35),
+                        color: colorScheme.primary.withOpacity(0.35),
                         blurRadius: 10,
                         offset: const Offset(0, 3),
                       ),
@@ -152,8 +156,7 @@ class _StepBubble extends StatelessWidget {
             duration: const Duration(milliseconds: 200),
             style: TextStyle(
               fontSize: 11,
-              fontWeight:
-                  isCurrent ? FontWeight.w700 : FontWeight.w500,
+              fontWeight: isCurrent ? FontWeight.w700 : FontWeight.w500,
               color: labelColor,
               letterSpacing: -0.2,
             ),
