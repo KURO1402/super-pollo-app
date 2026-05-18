@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:super_pollo_app/models/mesas_model.dart';
 import 'package:super_pollo_app/models/mesas_response_model.dart';
 import 'package:super_pollo_app/services/mesas_service.dart';
+import 'package:super_pollo_app/theme/app_colors.dart';
 
 class GestionMesasPage extends StatefulWidget {
   const GestionMesasPage({super.key});
@@ -14,7 +15,7 @@ class GestionMesasPage extends StatefulWidget {
 class _GestionMesasPageState extends State<GestionMesasPage> {
   final MesasService _mesasService = MesasService();
 
-  int _selectedFilter = 0; // 0: Todas, 1: Libres, 2: Ocupadas
+  int _selectedFilter = 0;
   List<MesaModel> _mesas = [];
   bool _isLoading = true;
   String? _error;
@@ -31,21 +32,18 @@ class _GestionMesasPageState extends State<GestionMesasPage> {
         _isLoading = true;
         _error = null;
       });
-
       final now = DateTime.now();
       final fecha =
           '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
       final hora =
           '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
-
       final MesasResponseModel response =
           await _mesasService.getMesasPedido(fecha, hora);
-
       setState(() {
         _mesas = response.mesas;
         _isLoading = false;
       });
-    } catch (e) {
+    } catch (_) {
       setState(() {
         _error = 'Error al cargar las mesas';
         _isLoading = false;
@@ -73,27 +71,31 @@ class _GestionMesasPageState extends State<GestionMesasPage> {
   bool _isUnavailable(MesaModel mesa) =>
       mesa.estadoLocal == 'ocupado' || mesa.estadoMesa == 'reservada';
 
+  // Los colores semánticos de estado NO cambian con el tema (son señales visuales)
   _EstadoConfig _getEstadoConfig(MesaModel mesa) {
     if (mesa.estadoLocal == 'ocupado') {
       return _EstadoConfig(
         label: 'Ocupada',
-        color: const Color(0xFFE53935),
+        color: AppColors.error,
         bgColor: const Color(0xFFFFEBEE),
+        bgColorDark: const Color(0xFF3E0A0A),
         icon: Icons.block_rounded,
       );
     }
     if (mesa.estadoMesa == 'reservada') {
       return _EstadoConfig(
         label: 'Reservada',
-        color: const Color(0xFFE67E22),
+        color: AppColors.warning,
         bgColor: const Color(0xFFFFF3E0),
+        bgColorDark: const Color(0xFF3E2800),
         icon: Icons.event_busy_rounded,
       );
     }
     return _EstadoConfig(
       label: 'Disponible',
-      color: const Color(0xFF2E7D32),
+      color: AppColors.success,
       bgColor: const Color(0xFFE8F5E9),
+      bgColorDark: const Color(0xFF0A2E0D),
       icon: Icons.check_circle_outline_rounded,
     );
   }
@@ -109,36 +111,19 @@ class _GestionMesasPageState extends State<GestionMesasPage> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFFAFAFA),
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        surfaceTintColor: Colors.transparent,
         leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back_ios_new_rounded,
-            color: Color(0xFF1A1A1A),
-            size: 20,
-          ),
-          onPressed: () {
-            if (GoRouter.of(context).canPop()) {
-              GoRouter.of(context).pop();
-            } else {
-              GoRouter.of(context).go('/');
-            }
-          },
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
+          onPressed: () => GoRouter.of(context).canPop()
+              ? GoRouter.of(context).pop()
+              : GoRouter.of(context).go('/'),
         ),
         centerTitle: true,
-        title: const Text(
-          'Gestión de Mesas',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-            color: Color(0xFF1A1A1A),
-            letterSpacing: -0.5,
-          ),
-        ),
+        title: const Text('Gestión de Mesas'),
       ),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20.0),
@@ -147,35 +132,29 @@ class _GestionMesasPageState extends State<GestionMesasPage> {
           children: [
             const SizedBox(height: 20),
 
-            // Header
+            // Header con acento de marca
             Row(
               children: [
                 Container(
                   width: 4,
                   height: 22,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1565C0),
+                    color: colorScheme.primary,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
                 const SizedBox(width: 10),
-                const Text(
+                Text(
                   'Estado de mesas',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF1A1A1A),
-                    letterSpacing: -0.3,
-                  ),
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontSize: 16,
+                        letterSpacing: -0.3,
+                      ),
                 ),
                 const Spacer(),
-                // Botón refrescar
                 IconButton(
                   onPressed: _cargarMesas,
-                  icon: const Icon(
-                    Icons.refresh_rounded,
-                    color: Color(0xFF1565C0),
-                  ),
+                  icon: Icon(Icons.refresh_rounded, color: colorScheme.primary),
                 ),
               ],
             ),
@@ -185,48 +164,38 @@ class _GestionMesasPageState extends State<GestionMesasPage> {
             // Filtros
             Row(
               children: [
-                _buildFilterButton('Todas', 0),
+                _buildFilterButton('Todas', 0, colorScheme, isDark),
                 const SizedBox(width: 10),
-                _buildFilterButton('Libres', 1),
+                _buildFilterButton('Libres', 1, colorScheme, isDark),
                 const SizedBox(width: 10),
-                _buildFilterButton('Ocupadas', 2),
+                _buildFilterButton('Ocupadas', 2, colorScheme, isDark),
               ],
             ),
 
             const SizedBox(height: 20),
 
-            // Grid
+            // Contenido principal
             Expanded(
               child: _isLoading
-                  ? const Center(
+                  ? Center(
                       child: CircularProgressIndicator(
-                        color: Color(0xFF1565C0),
-                      ),
+                          color: colorScheme.primary),
                     )
                   : _error != null
                       ? Center(
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(
-                                Icons.wifi_off_rounded,
-                                size: 48,
-                                color: Colors.grey.shade400,
-                              ),
+                              const Icon(Icons.wifi_off_rounded,
+                                  size: 48, color: AppColors.grey300),
                               const SizedBox(height: 12),
-                              Text(
-                                _error!,
-                                style:
-                                    const TextStyle(color: Color(0xFF757575)),
-                              ),
+                              Text(_error!,
+                                  style: Theme.of(context).textTheme.bodySmall),
                               const SizedBox(height: 16),
                               TextButton.icon(
                                 onPressed: _cargarMesas,
                                 icon: const Icon(Icons.refresh_rounded),
                                 label: const Text('Reintentar'),
-                                style: TextButton.styleFrom(
-                                  foregroundColor: const Color(0xFF1565C0),
-                                ),
                               ),
                             ],
                           ),
@@ -236,15 +205,16 @@ class _GestionMesasPageState extends State<GestionMesasPage> {
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Icon(
+                                  const Icon(
                                     Icons.table_restaurant_rounded,
                                     size: 48,
-                                    color: Colors.grey.shade300,
+                                    color: AppColors.grey300,
                                   ),
                                   const SizedBox(height: 12),
-                                  const Text(
+                                  Text(
                                     'No se encontraron mesas',
-                                    style: TextStyle(color: Color(0xFF9E9E9E)),
+                                    style:
+                                        Theme.of(context).textTheme.bodySmall,
                                   ),
                                 ],
                               ),
@@ -262,112 +232,8 @@ class _GestionMesasPageState extends State<GestionMesasPage> {
                                 final mesa = _filteredMesas[index];
                                 final config = _getEstadoConfig(mesa);
                                 final unavailable = _isUnavailable(mesa);
-
-                                return GestureDetector(
-                                  onTap: () => _showTableDetails(mesa),
-                                  child: AnimatedContainer(
-                                    duration:
-                                        const Duration(milliseconds: 200),
-                                    decoration: BoxDecoration(
-                                      color: unavailable
-                                          ? const Color(0xFFF5F5F5)
-                                          : Colors.white,
-                                      borderRadius:
-                                          BorderRadius.circular(16),
-                                      border: Border.all(
-                                        color: unavailable
-                                            ? config.color.withOpacity(0.4)
-                                            : const Color(0xFFE8E8E8),
-                                        width: unavailable ? 1.5 : 1,
-                                      ),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color:
-                                              Colors.black.withOpacity(0.04),
-                                          blurRadius: 8,
-                                          offset: const Offset(0, 2),
-                                        ),
-                                      ],
-                                    ),
-                                    child: Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 12, vertical: 10),
-                                      child: Column(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          Icon(
-                                            Icons.table_restaurant_rounded,
-                                            size: 28,
-                                            color: unavailable
-                                                ? config.color
-                                                : const Color(0xFF424242),
-                                          ),
-                                          const SizedBox(height: 6),
-                                          Text(
-                                            mesa.nombre,
-                                            style: TextStyle(
-                                              fontSize: 15,
-                                              fontWeight: FontWeight.w700,
-                                              letterSpacing: -0.3,
-                                              color: unavailable
-                                                  ? const Color(0xFF1A1A1A)
-                                                  : const Color(0xFF1A1A1A),
-                                            ),
-                                          ),
-                                          const SizedBox(height: 2),
-                                          Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.center,
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              Icon(
-                                                Icons.person_outline_rounded,
-                                                size: 12,
-                                                color: const Color(0xFF757575),
-                                              ),
-                                              const SizedBox(width: 3),
-                                              Text(
-                                                '${mesa.capacidadMesa} personas',
-                                                style: const TextStyle(
-                                                  fontSize: 12,
-                                                  color: Color(0xFF757575),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                          const SizedBox(height: 8),
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(
-                                                horizontal: 10, vertical: 4),
-                                            decoration: BoxDecoration(
-                                              color: config.bgColor,
-                                              borderRadius:
-                                                  BorderRadius.circular(20),
-                                            ),
-                                            child: Row(
-                                              mainAxisSize: MainAxisSize.min,
-                                              children: [
-                                                Icon(config.icon,
-                                                    size: 11,
-                                                    color: config.color),
-                                                const SizedBox(width: 4),
-                                                Text(
-                                                  config.label,
-                                                  style: TextStyle(
-                                                    fontSize: 11,
-                                                    fontWeight: FontWeight.w600,
-                                                    color: config.color,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                );
+                                return _buildMesaCard(
+                                    mesa, config, unavailable, isDark);
                               },
                             ),
             ),
@@ -377,7 +243,106 @@ class _GestionMesasPageState extends State<GestionMesasPage> {
     );
   }
 
-  Widget _buildFilterButton(String text, int index) {
+  // ── Mesa card ────────────────────────────────────────────────────────────────
+  Widget _buildMesaCard(
+    MesaModel mesa,
+    _EstadoConfig config,
+    bool unavailable,
+    bool isDark,
+  ) {
+    final cardColor = unavailable
+        ? (isDark ? AppColors.navyLight : AppColors.grey100)
+        : (isDark ? AppColors.navyCard : Colors.white);
+    final borderColor = unavailable
+        ? config.color.withOpacity(0.4)
+        : (isDark ? AppColors.navyLight : AppColors.grey100);
+    final iconColor =
+        unavailable ? config.color : (isDark ? AppColors.grey300 : AppColors.grey700);
+    final stateBg = isDark ? config.bgColorDark : config.bgColor;
+
+    return GestureDetector(
+      onTap: () => _showTableDetails(mesa),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        decoration: BoxDecoration(
+          color: cardColor,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+              color: borderColor, width: unavailable ? 1.5 : 1),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(isDark ? 0.2 : 0.04),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.table_restaurant_rounded, size: 28, color: iconColor),
+              const SizedBox(height: 6),
+              Text(
+                mesa.nombre,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: -0.3,
+                    ),
+              ),
+              const SizedBox(height: 2),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.person_outline_rounded,
+                      size: 12, color: AppColors.grey500),
+                  const SizedBox(width: 3),
+                  Text(
+                    '${mesa.capacidadMesa} personas',
+                    style: Theme.of(context)
+                        .textTheme
+                        .bodySmall
+                        ?.copyWith(fontSize: 12),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: stateBg,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(config.icon, size: 11, color: config.color),
+                    const SizedBox(width: 4),
+                    Text(
+                      config.label,
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: config.color,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ── Filtros ──────────────────────────────────────────────────────────────────
+  Widget _buildFilterButton(
+      String text, int index, ColorScheme colorScheme, bool isDark) {
     final isSelected = _selectedFilter == index;
     return Expanded(
       child: GestureDetector(
@@ -387,13 +352,13 @@ class _GestionMesasPageState extends State<GestionMesasPage> {
           padding: const EdgeInsets.symmetric(vertical: 11),
           decoration: BoxDecoration(
             color: isSelected
-                ? const Color(0xFF1565C0)
-                : const Color(0xFFF5F5F5),
+                ? colorScheme.primary
+                : (isDark ? AppColors.navyLight : AppColors.grey100),
             borderRadius: BorderRadius.circular(10),
             boxShadow: isSelected
                 ? [
                     BoxShadow(
-                      color: const Color(0xFF1565C0).withOpacity(0.3),
+                      color: colorScheme.primary.withOpacity(0.3),
                       blurRadius: 8,
                       offset: const Offset(0, 3),
                     ),
@@ -406,7 +371,9 @@ class _GestionMesasPageState extends State<GestionMesasPage> {
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
-                color: isSelected ? Colors.white : const Color(0xFF757575),
+                color: isSelected
+                    ? Colors.white
+                    : (isDark ? AppColors.grey300 : AppColors.grey500),
               ),
             ),
           ),
@@ -415,6 +382,7 @@ class _GestionMesasPageState extends State<GestionMesasPage> {
     );
   }
 
+  // ── Modal de detalles ────────────────────────────────────────────────────────
   Widget _buildTableDetailsModal(MesaModel mesa) {
     final config = _getEstadoConfig(mesa);
 
@@ -423,10 +391,21 @@ class _GestionMesasPageState extends State<GestionMesasPage> {
       minChildSize: 0.5,
       maxChildSize: 0.95,
       builder: (context, scrollController) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        final colorScheme = Theme.of(context).colorScheme;
+        final sheetBg = isDark ? AppColors.navyDeep : Colors.white;
+        final cardBg = isDark ? AppColors.navyCard : Colors.white;
+        final sectionBorderColor =
+            isDark ? AppColors.navyLight : AppColors.grey100;
+        final itemBg =
+            isDark ? AppColors.navyLight : AppColors.grey100.withOpacity(0.6);
+        final handleColor = isDark ? AppColors.navyLight : AppColors.grey100;
+        final stateBg = isDark ? config.bgColorDark : config.bgColor;
+
         return Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.only(
+          decoration: BoxDecoration(
+            color: sheetBg,
+            borderRadius: const BorderRadius.only(
               topLeft: Radius.circular(24),
               topRight: Radius.circular(24),
             ),
@@ -444,18 +423,18 @@ class _GestionMesasPageState extends State<GestionMesasPage> {
                       width: 40,
                       height: 4,
                       decoration: BoxDecoration(
-                        color: Colors.grey.shade300,
+                        color: handleColor,
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
                   ),
                   const SizedBox(height: 20),
 
-                  // Info mesa
+                  // Info de la mesa
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: config.bgColor,
+                      color: stateBg,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
                           color: config.color.withOpacity(0.4), width: 1.5),
@@ -468,11 +447,10 @@ class _GestionMesasPageState extends State<GestionMesasPage> {
                           children: [
                             Text(
                               mesa.nombre,
-                              style: const TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF1A1A1A),
-                              ),
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleLarge
+                                  ?.copyWith(fontSize: 22),
                             ),
                             Container(
                               padding: const EdgeInsets.symmetric(
@@ -504,12 +482,14 @@ class _GestionMesasPageState extends State<GestionMesasPage> {
                         Row(
                           children: [
                             Icon(Icons.person_outline_rounded,
-                                size: 16, color: Colors.grey.shade600),
+                                size: 16, color: AppColors.grey500),
                             const SizedBox(width: 6),
                             Text(
                               '${mesa.capacidadMesa} personas',
-                              style: TextStyle(
-                                  fontSize: 15, color: Colors.grey.shade700),
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.copyWith(fontSize: 15),
                             ),
                           ],
                         ),
@@ -519,53 +499,52 @@ class _GestionMesasPageState extends State<GestionMesasPage> {
 
                   const SizedBox(height: 20),
 
-                  // Pedidos (datos de prueba)
+                  // Pedidos
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: cardBg,
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.grey.shade200),
+                      border: Border.all(color: sectionBorderColor),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           'Pedidos (3)',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF1A1A1A),
-                          ),
+                          style: Theme.of(context)
+                              .textTheme
+                              .titleMedium
+                              ?.copyWith(fontSize: 16),
                         ),
                         const SizedBox(height: 12),
-                        _buildOrderItem('1x 1/4 de Pollo a la Brasa',
-                            'S/ 14.00'),
+                        _buildOrderItem(context, '1x 1/4 de Pollo a la Brasa',
+                            'S/ 14.00', itemBg),
+                        const SizedBox(height: 8),
+                        _buildOrderItem(context,
+                            '2x Gaseosa Inka Kola Personal', 'S/ 4.00', itemBg),
                         const SizedBox(height: 8),
                         _buildOrderItem(
-                            '2x Gaseosa Inka Kola Personal', 'S/ 4.00'),
-                        const SizedBox(height: 8),
-                        _buildOrderItem('1x Ensalada Mixta', 'S/ 8.00'),
+                            context, '1x Ensalada Mixta', 'S/ 8.00', itemBg),
                         const SizedBox(height: 16),
-                        Container(height: 1, color: Colors.grey.shade200),
+                        Divider(height: 1, color: sectionBorderColor),
                         const SizedBox(height: 12),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
                               'Total',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.grey.shade800,
-                              ),
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleMedium
+                                  ?.copyWith(fontSize: 16),
                             ),
-                            const Text(
+                            Text(
                               'S/ 26.00',
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
-                                color: Color(0xFF1565C0),
+                                color: colorScheme.primary,
                               ),
                             ),
                           ],
@@ -585,10 +564,11 @@ class _GestionMesasPageState extends State<GestionMesasPage> {
                           child: Container(
                             height: 50,
                             decoration: BoxDecoration(
-                              color: Colors.red.withOpacity(0.08),
+                              color: AppColors.error
+                                  .withOpacity(isDark ? 0.15 : 0.08),
                               borderRadius: BorderRadius.circular(10),
-                              border:
-                                  Border.all(color: Colors.red, width: 1.5),
+                              border: Border.all(
+                                  color: AppColors.error, width: 1.5),
                             ),
                             child: const Center(
                               child: Text(
@@ -596,7 +576,7 @@ class _GestionMesasPageState extends State<GestionMesasPage> {
                                 style: TextStyle(
                                   fontSize: 15,
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.red,
+                                  color: AppColors.error,
                                 ),
                               ),
                             ),
@@ -610,14 +590,15 @@ class _GestionMesasPageState extends State<GestionMesasPage> {
                           child: Container(
                             height: 50,
                             decoration: BoxDecoration(
-                              color: const Color(0xFF1565C0),
+                              color: colorScheme.primary,
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: const Center(
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Icon(Icons.add, color: Colors.white, size: 20),
+                                  Icon(Icons.add,
+                                      color: Colors.white, size: 20),
                                   SizedBox(width: 8),
                                   Text(
                                     'Agregar',
@@ -645,11 +626,12 @@ class _GestionMesasPageState extends State<GestionMesasPage> {
     );
   }
 
-  Widget _buildOrderItem(String itemName, String price) {
+  Widget _buildOrderItem(
+      BuildContext context, String itemName, String price, Color bgColor) {
     return Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: Colors.grey.shade50,
+        color: bgColor,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
@@ -658,21 +640,19 @@ class _GestionMesasPageState extends State<GestionMesasPage> {
           Expanded(
             child: Text(
               itemName,
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: Color(0xFF1A1A1A),
-              ),
+              style: Theme.of(context)
+                  .textTheme
+                  .bodyMedium
+                  ?.copyWith(fontWeight: FontWeight.w500, fontSize: 14),
               overflow: TextOverflow.ellipsis,
             ),
           ),
           Text(
             price,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF1A1A1A),
-            ),
+            style: Theme.of(context)
+                .textTheme
+                .bodyMedium
+                ?.copyWith(fontWeight: FontWeight.bold, fontSize: 14),
           ),
         ],
       ),
@@ -680,16 +660,19 @@ class _GestionMesasPageState extends State<GestionMesasPage> {
   }
 }
 
+// ── Modelo de configuración de estado ────────────────────────────────────────
 class _EstadoConfig {
   final String label;
   final Color color;
-  final Color bgColor;
+  final Color bgColor;     // fondo en light mode
+  final Color bgColorDark; // fondo en dark mode
   final IconData icon;
 
   _EstadoConfig({
     required this.label,
     required this.color,
     required this.bgColor,
+    required this.bgColorDark,
     required this.icon,
   });
 }
