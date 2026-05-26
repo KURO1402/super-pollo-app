@@ -5,6 +5,7 @@ import 'package:super_pollo_app/models/listar_pedidos_model.dart';
 import 'package:super_pollo_app/utils/notificaciones_state.dart';
 import 'package:super_pollo_app/widgets/pedidos_widget.dart';
 import 'package:super_pollo_app/theme/app_colors.dart';
+import 'package:super_pollo_app/screens/editar_pedido_page.dart'; // ← NUEVO
 import '../utils/token_storage.dart';
 
 class MenuPrincipalPage extends StatefulWidget {
@@ -36,7 +37,8 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
           '${ahora.year}-${ahora.month.toString().padLeft(2, '0')}-${ahora.day.toString().padLeft(2, '0')}';
       final hora =
           '${ahora.hour.toString().padLeft(2, '0')}:${ahora.minute.toString().padLeft(2, '0')}';
-      final response = await PedidosService.listarPedidos(fecha: fecha, hora: hora);
+      final response =
+          await PedidosService.listarPedidos(fecha: fecha, hora: hora);
       if (mounted) {
         setState(() {
           if (response.ok) _recentOrders = response.pedidos.take(3).toList();
@@ -80,12 +82,29 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
 
   void _navigateTo(String route) => context.go(route);
 
+  // ← NUEVO: navega a la página de edición
+  void _navegarAEditar(Pedido pedido) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => EditarPedidoPage(
+          pedido: pedido,
+          onPedidoEditado: _cargarPedidosRecientes,
+        ),
+      ),
+    );
+  }
+
   void _showOrderDetails(Pedido pedido) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => OrderDetailsModal(pedido: pedido),
+      builder: (context) => OrderDetailsModal(
+        pedido: pedido,
+        onEditarPedido: () => _navegarAEditar(pedido),       // ← NUEVO
+        onPedidoCancelado: _cargarPedidosRecientes,          // ← NUEVO
+      ),
     );
   }
 
@@ -193,7 +212,8 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
                 child: CircleAvatar(
                   radius: 18,
                   backgroundColor: cardColor,
-                  child: Icon(Icons.person, color: colorScheme.primary, size: 20),
+                  child:
+                      Icon(Icons.person, color: colorScheme.primary, size: 20),
                 ),
               ),
               const SizedBox(width: 4),
@@ -256,8 +276,8 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
                   duration: const Duration(milliseconds: 300),
                   curve: Curves.easeOutCubic,
                   builder: (context, value, child) => Transform.translate(
-                    offset: Offset(
-                        MediaQuery.of(context).size.width * value, 0),
+                    offset:
+                        Offset(MediaQuery.of(context).size.width * value, 0),
                     child: child,
                   ),
                   child: Material(
@@ -318,7 +338,9 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
                                             CrossAxisAlignment.start,
                                         children: [
                                           Text(
-                                            "$nombre $apellido".trim().isEmpty
+                                            "$nombre $apellido"
+                                                    .trim()
+                                                    .isEmpty
                                                 ? "Usuario"
                                                 : "$nombre $apellido",
                                             style: const TextStyle(
@@ -333,8 +355,8 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
                                             padding: const EdgeInsets.symmetric(
                                                 horizontal: 8, vertical: 2),
                                             decoration: BoxDecoration(
-                                              color: Colors.white
-                                                  .withOpacity(0.2),
+                                              color:
+                                                  Colors.white.withOpacity(0.2),
                                               borderRadius:
                                                   BorderRadius.circular(12),
                                             ),
@@ -351,7 +373,6 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
                               ],
                             ),
                           ),
-                          // Items del menú
                           Expanded(
                             child: ListView(
                               padding: const EdgeInsets.symmetric(vertical: 8),
@@ -410,13 +431,12 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
                               ],
                             ),
                           ),
-                          // Footer
                           Container(
                             padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
                               color: footerColor,
-                              border: Border(
-                                  top: BorderSide(color: borderColor)),
+                              border:
+                                  Border(top: BorderSide(color: borderColor)),
                             ),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -589,7 +609,11 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
             ],
           ),
           const SizedBox(height: 16),
-          Text(label, style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 14)),
+          Text(label,
+              style: Theme.of(context)
+                  .textTheme
+                  .bodySmall
+                  ?.copyWith(fontSize: 14)),
           const SizedBox(height: 4),
           Text(value,
               style: Theme.of(context)
@@ -601,7 +625,6 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
     );
   }
 
-  // ── Sección title ─────────────────────────────────────────────────────────────
   Widget _buildSectionTitle(String title) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -613,7 +636,6 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
     );
   }
 
-  // ── Acciones rápidas ──────────────────────────────────────────────────────────
   Widget _buildQuickActionsButtons() {
     final colorScheme = Theme.of(context).colorScheme;
     return Row(

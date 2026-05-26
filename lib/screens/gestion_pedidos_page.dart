@@ -4,6 +4,7 @@ import 'package:super_pollo_app/services/listar_pedidos_service.dart';
 import 'package:super_pollo_app/models/listar_pedidos_model.dart';
 import 'package:super_pollo_app/widgets/pedidos_widget.dart';
 import 'package:super_pollo_app/theme/app_colors.dart';
+import 'package:super_pollo_app/screens/editar_pedido_page.dart';
 
 class GestionPedidosPage extends StatefulWidget {
   const GestionPedidosPage({super.key});
@@ -35,7 +36,8 @@ class _GestionPedidosPageState extends State<GestionPedidosPage> {
           '${ahora.year}-${ahora.month.toString().padLeft(2, '0')}-${ahora.day.toString().padLeft(2, '0')}';
       final hora =
           '${ahora.hour.toString().padLeft(2, '0')}:${ahora.minute.toString().padLeft(2, '0')}';
-      final response = await PedidosService.listarPedidos(fecha: fecha, hora: hora);
+      final response =
+          await PedidosService.listarPedidos(fecha: fecha, hora: hora);
       if (mounted) {
         setState(() {
           if (response.ok) {
@@ -65,7 +67,23 @@ class _GestionPedidosPageState extends State<GestionPedidosPage> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => OrderDetailsModal(pedido: pedido),
+      builder: (context) => OrderDetailsModal(
+        pedido: pedido,
+        onEditarPedido: () => _navegarAEditar(pedido),
+        onPedidoCancelado: _cargarPedidos, // recarga la lista al cancelar
+      ),
+    );
+  }
+
+  void _navegarAEditar(Pedido pedido) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => EditarPedidoPage(
+          pedido: pedido,
+          onPedidoEditado: _cargarPedidos,
+        ),
+      ),
     );
   }
 
@@ -124,7 +142,7 @@ class _GestionPedidosPageState extends State<GestionPedidosPage> {
                 pedidos: _getPedidosFiltrados(),
                 isLoading: _isLoading,
                 errorMessage: _errorMessage,
-                onOrderTap: _showOrderDetails,
+                onOrderTap: _showOrderDetails, // sin cambios
               ),
             ],
           ),

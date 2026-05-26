@@ -10,11 +10,9 @@ class PedidosResponse {
   factory PedidosResponse.fromJson(Map<String, dynamic> json) {
     try {
       var pedidosList = json['pedidos'] ?? [];
-
       List<Pedido> pedidos = [];
       if (pedidosList is List) {
         for (var p in pedidosList) {
-          // Convertir cada elemento a Map<String, dynamic>
           Map<String, dynamic> pedidoMap;
           if (p is Map) {
             pedidoMap = Map<String, dynamic>.from(p);
@@ -24,7 +22,6 @@ class PedidosResponse {
           pedidos.add(Pedido.fromJson(pedidoMap));
         }
       }
-
       return PedidosResponse(ok: json['ok'] ?? false, pedidos: pedidos);
     } catch (e) {
       print('Error parsing PedidosResponse: $e');
@@ -52,7 +49,6 @@ class Pedido {
 
   factory Pedido.fromJson(Map<String, dynamic> json) {
     try {
-      // Parsear mesas - puede ser String, List de strings, List de objetos, o Map/Object
       List<String> mesasList = [];
       var mesasData = json['mesas'];
       if (mesasData != null) {
@@ -63,17 +59,14 @@ class Pedido {
             if (mesa is String) {
               mesasList.add(mesa);
             } else if (mesa is Map) {
-              // Si es un objeto, extraer el numero_mesa
               mesasList.add(mesa['numero_mesa']?.toString() ?? '');
             }
           }
         } else if (mesasData is Map) {
-          // Si es un objeto único
           mesasList = [mesasData['numero_mesa']?.toString() ?? ''];
         }
       }
 
-      // Parsear detalles
       List<DetallePedido> detallesList = [];
       var detallesData = json['detalles'];
       if (detallesData is List) {
@@ -90,7 +83,7 @@ class Pedido {
 
       return Pedido(
         idPedido: json['id_pedido'] ?? 0,
-        estadoPedido: json['estado_pedido'] ?? 'pendiente',
+        estadoPedido: json['estado_pedido'] ?? 'disponible',
         precioPrecuenta: json['precio_precuenta']?.toString() ?? '0.00',
         mesas: mesasList,
         tiempoDesdeActualizacion: json['tiempo_desde_actualizacion'] ?? '',
@@ -100,7 +93,7 @@ class Pedido {
       print('Error parsing Pedido: $e');
       return Pedido(
         idPedido: 0,
-        estadoPedido: 'pendiente',
+        estadoPedido: 'disponible',
         precioPrecuenta: '0.00',
         mesas: [],
         tiempoDesdeActualizacion: '',
@@ -113,11 +106,17 @@ class Pedido {
 
   int get totalItems => detalles.fold(0, (sum, d) => sum + d.cantidadPedido);
 
+  // Solo se puede editar o cancelar si está disponible
+  bool get puedeEditarse => estadoPedido == 'pendiente' || estadoPedido == 'disponible';
+
   Color get colorEstado {
     switch (estadoPedido) {
       case 'completado':
         return Colors.green;
+      case 'cancelado':
+        return Colors.red;
       case 'pendiente':
+      case 'disponible':
       default:
         return Colors.orange;
     }
@@ -127,9 +126,13 @@ class Pedido {
     switch (estadoPedido) {
       case 'completado':
         return 'Completado';
+      case 'cancelado':
+        return 'Cancelado';
       case 'pendiente':
-      default:
         return 'Pendiente';
+      case 'disponible':
+      default:
+        return 'Disponible';
     }
   }
 }

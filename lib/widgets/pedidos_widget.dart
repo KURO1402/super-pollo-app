@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:super_pollo_app/models/listar_pedidos_model.dart';
+import 'package:super_pollo_app/services/cancelar_pedido_service.dart';
 import 'package:super_pollo_app/theme/app_colors.dart';
 
 // ── OrderCardWidget ───────────────────────────────────────────────────────────
@@ -143,30 +144,46 @@ class OrderCardWidget extends StatelessWidget {
 }
 
 // ── OrderDetailsModal ─────────────────────────────────────────────────────────
-class OrderDetailsModal extends StatelessWidget {
+class OrderDetailsModal extends StatefulWidget {
   final Pedido pedido;
+  final VoidCallback? onEditarPedido;
+  final VoidCallback? onPedidoCancelado;
 
-  const OrderDetailsModal({super.key, required this.pedido});
+  const OrderDetailsModal({
+    super.key,
+    required this.pedido,
+    this.onEditarPedido,
+    this.onPedidoCancelado,
+  });
 
-  void _mostrarConfirmacionEliminar(BuildContext context) {
+  @override
+  State<OrderDetailsModal> createState() => _OrderDetailsModalState();
+}
+
+class _OrderDetailsModalState extends State<OrderDetailsModal> {
+  final _cancelarService = CancelarPedidoService();
+  bool _isCanceling = false;
+
+  Pedido get pedido => widget.pedido;
+
+  Future<void> _cancelarPedido(BuildContext context) async {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final cardColor = isDark ? AppColors.navyCard : Colors.white;
 
-    showDialog(
+    final confirmar = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: cardColor,
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text(
-          '¿Eliminar pedido?',
+          '¿Cancelar pedido?',
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w700,
                 fontSize: 18,
               ),
         ),
         content: Text(
-          'Esta acción no se puede deshacer. ¿Deseas eliminar el pedido #${pedido.idPedido}?',
+          'Esta acción no se puede deshacer. ¿Deseas cancelar el pedido #${pedido.idPedido}?',
           style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 14),
         ),
         actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
@@ -175,7 +192,7 @@ class OrderDetailsModal extends StatelessWidget {
             children: [
               Expanded(
                 child: GestureDetector(
-                  onTap: () => Navigator.pop(ctx),
+                  onTap: () => Navigator.pop(ctx, false),
                   child: Container(
                     height: 46,
                     decoration: BoxDecoration(
@@ -184,7 +201,7 @@ class OrderDetailsModal extends StatelessWidget {
                     ),
                     child: Center(
                       child: Text(
-                        'Cancelar',
+                        'Volver',
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                               fontWeight: FontWeight.w600,
                             ),
@@ -196,7 +213,7 @@ class OrderDetailsModal extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: GestureDetector(
-                  onTap: () => Navigator.pop(ctx),
+                  onTap: () => Navigator.pop(ctx, true),
                   child: Container(
                     height: 46,
                     decoration: BoxDecoration(
@@ -205,7 +222,7 @@ class OrderDetailsModal extends StatelessWidget {
                     ),
                     child: const Center(
                       child: Text(
-                        'Eliminar',
+                        'Sí, cancelar',
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
@@ -221,6 +238,46 @@ class OrderDetailsModal extends StatelessWidget {
         ],
       ),
     );
+
+    if (confirmar != true || !context.mounted) return;
+
+    setState(() => _isCanceling = true);
+    try {
+      final response = await _cancelarService.cancelarPedido(pedido.idPedido);
+      if (!context.mounted) return;
+      if (response.ok) {
+        Navigator.pop(context); // cierra el modal
+        widget.onPedidoCancelado?.call();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(response.mensaje.isNotEmpty
+                ? response.mensaje
+                : 'Pedido cancelado correctamente'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(response.mensaje.isNotEmpty
+                ? response.mensaje
+                : 'No se pudo cancelar el pedido'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString().replaceFirst('Exception: ', '')),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isCanceling = false);
+    }
   }
 
   @override
@@ -440,14 +497,14 @@ class OrderDetailsModal extends StatelessWidget {
                               ),
                             ),
                           ),
-                          // Editar
-                          if (pedido.estadoPedido != 'completado') ...[
+                          // Editar — solo si el pedido puede editarse
+                          if (pedido.puedeEditarse) ...[
                             const SizedBox(width: 12),
                             Expanded(
                               child: GestureDetector(
                                 onTap: () {
                                   Navigator.pop(context);
-                                  // TODO: navegar a editar
+                                  widget.onEditarPedido?.call();
                                 },
                                 child: Container(
                                   height: 50,
@@ -480,11 +537,13 @@ class OrderDetailsModal extends StatelessWidget {
                         ],
                       ),
 
-                      // Eliminar
-                      if (pedido.estadoPedido != 'completado') ...[
+                      // Cancelar — solo si el pedido puede editarse
+                      if (pedido.puedeEditarse) ...[
                         const SizedBox(height: 12),
                         GestureDetector(
-                          onTap: () => _mostrarConfirmacionEliminar(context),
+                          onTap: _isCanceling
+                              ? null
+                              : () => _cancelarPedido(context),
                           child: Container(
                             height: 50,
                             width: double.infinity,
@@ -495,23 +554,32 @@ class OrderDetailsModal extends StatelessWidget {
                               border: Border.all(
                                   color: AppColors.error.withOpacity(0.3)),
                             ),
-                            child: const Center(
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(Icons.delete_outline_rounded,
-                                      color: AppColors.error, size: 18),
-                                  SizedBox(width: 6),
-                                  Text(
-                                    'Eliminar pedido',
-                                    style: TextStyle(
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.w600,
-                                      color: AppColors.error,
+                            child: Center(
+                              child: _isCanceling
+                                  ? const SizedBox(
+                                      height: 20,
+                                      width: 20,
+                                      child: CircularProgressIndicator(
+                                        color: AppColors.error,
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : const Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(Icons.cancel_outlined,
+                                            color: AppColors.error, size: 18),
+                                        SizedBox(width: 6),
+                                        Text(
+                                          'Cancelar pedido',
+                                          style: TextStyle(
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.w600,
+                                            color: AppColors.error,
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                  ),
-                                ],
-                              ),
                             ),
                           ),
                         ),
@@ -536,7 +604,6 @@ class OrderDetailsModal extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        // Badge cantidad
         Container(
           width: 32,
           height: 32,
@@ -556,7 +623,6 @@ class OrderDetailsModal extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 12),
-        // Nombre del producto
         Expanded(
           child: Text(
             detalle.nombreProducto,
@@ -566,7 +632,6 @@ class OrderDetailsModal extends StatelessWidget {
                 ?.copyWith(fontWeight: FontWeight.w500, fontSize: 15),
           ),
         ),
-        // Subtotal
         Text(
           'S/ ${detalle.subtotal}',
           style: Theme.of(context)
