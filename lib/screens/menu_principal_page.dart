@@ -283,7 +283,7 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
                   child: Material(
                     color: Colors.transparent,
                     child: Container(
-                      width: MediaQuery.of(context).size.width * 0.5,
+                      width: MediaQuery.of(context).size.width * 0.9,
                       height: double.infinity,
                       decoration: BoxDecoration(
                         color: cardColor,

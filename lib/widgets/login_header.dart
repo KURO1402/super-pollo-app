@@ -47,7 +47,7 @@ class LoginHeader extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         Text(
-          'Bienvenido de nuevo',
+          'Bienvenido de nuevo!!',
           style: TextStyle(
             fontSize: 13,
             color: isDark ? Colors.orange.shade100 : Colors.orange.shade200,
