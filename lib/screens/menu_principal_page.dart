@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:super_pollo_app/services/listar_pedidos_service.dart';
 import 'package:super_pollo_app/models/listar_pedidos_model.dart';
 import 'package:super_pollo_app/utils/notificaciones_state.dart';
+import 'package:super_pollo_app/utils/pedidos_state.dart';
 import 'package:super_pollo_app/widgets/pedidos_widget.dart';
 import 'package:super_pollo_app/theme/app_colors.dart';
-import 'package:super_pollo_app/screens/editar_pedido_page.dart'; // ← NUEVO
 import '../utils/token_storage.dart';
 
 class MenuPrincipalPage extends StatefulWidget {
@@ -18,41 +17,21 @@ class MenuPrincipalPage extends StatefulWidget {
 class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
   String nombre = "";
   String apellido = "";
-  List<Pedido> _recentOrders = [];
-  bool _isLoadingOrders = false;
+  final PedidosState _pedidosState = PedidosState();
   final NotificacionesState _notifState = NotificacionesState();
 
   @override
   void initState() {
     super.initState();
-    _notifState.addListener(_actualizarConteo);
-    _cargarPedidosRecientes();
-  }
-
-  void _cargarPedidosRecientes() async {
-    setState(() => _isLoadingOrders = true);
-    try {
-      final ahora = DateTime.now();
-      final fecha =
-          '${ahora.year}-${ahora.month.toString().padLeft(2, '0')}-${ahora.day.toString().padLeft(2, '0')}';
-      final hora =
-          '${ahora.hour.toString().padLeft(2, '0')}:${ahora.minute.toString().padLeft(2, '0')}';
-      final response =
-          await PedidosService.listarPedidos(fecha: fecha, hora: hora);
-      if (mounted) {
-        setState(() {
-          if (response.ok) _recentOrders = response.pedidos.take(3).toList();
-          _isLoadingOrders = false;
-        });
-      }
-    } catch (_) {
-      if (mounted) setState(() => _isLoadingOrders = false);
-    }
+    _notifState.addListener(_actualizar);
+    _pedidosState.addListener(_actualizar);
+    _pedidosState.cargar();
   }
 
   @override
   void dispose() {
-    _notifState.removeListener(_actualizarConteo);
+    _notifState.removeListener(_actualizar);
+    _pedidosState.removeListener(_actualizar);
     super.dispose();
   }
 
@@ -62,7 +41,7 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
     _loadUserData();
   }
 
-  void _actualizarConteo() => setState(() {});
+  void _actualizar() => setState(() {});
 
   void _loadUserData() {
     final data = GoRouterState.of(context).extra as Map?;
@@ -82,19 +61,6 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
 
   void _navigateTo(String route) => context.go(route);
 
-  // ← NUEVO: navega a la página de edición
-  void _navegarAEditar(Pedido pedido) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => EditarPedidoPage(
-          pedido: pedido,
-          onPedidoEditado: _cargarPedidosRecientes,
-        ),
-      ),
-    );
-  }
-
   void _showOrderDetails(Pedido pedido) {
     showModalBottomSheet(
       context: context,
@@ -102,8 +68,8 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
       backgroundColor: Colors.transparent,
       builder: (context) => OrderDetailsModal(
         pedido: pedido,
-        onEditarPedido: () => _navegarAEditar(pedido),       // ← NUEVO
-        onPedidoCancelado: _cargarPedidosRecientes,          // ← NUEVO
+        onEditarPedido: () => _pedidosState.cargar(),
+        onPedidoCancelado: () => _pedidosState.cargar(),
       ),
     );
   }
@@ -252,6 +218,7 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
     );
   }
 
+  // ── Menú lateral ─────────────────────────────────────────────────────────────
   void _showLeftMenu() {
     final colorScheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -296,6 +263,7 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
                       ),
                       child: Column(
                         children: [
+                          // Header con gradiente de marca
                           Container(
                             padding: const EdgeInsets.all(20),
                             decoration: BoxDecoration(
@@ -373,6 +341,7 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
                               ],
                             ),
                           ),
+                          // Items
                           Expanded(
                             child: ListView(
                               padding: const EdgeInsets.symmetric(vertical: 8),
@@ -399,7 +368,6 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
                                   icon: Icons.shopping_cart,
                                   label: 'Pedidos',
                                   color: AppColors.brandOrange,
-                                  badge: '5',
                                   onTap: () {
                                     Navigator.pop(context);
                                     _navigateTo("/gestion_pedidos");
@@ -431,6 +399,7 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
                               ],
                             ),
                           ),
+                          // Footer
                           Container(
                             padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
@@ -441,8 +410,7 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                               children: [
-                                _buildFooterIcon(
-                                    Icons.help_outline, 'Ayuda'),
+                                _buildFooterIcon(Icons.help_outline, 'Ayuda'),
                                 _buildFooterIcon(
                                     Icons.info_outline, 'Acerca de'),
                                 _buildFooterIcon(Icons.policy, 'Términos'),
@@ -512,14 +480,14 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
           Icon(icon, color: AppColors.grey500, size: 18),
           const SizedBox(height: 2),
           Text(label,
-              style: const TextStyle(
-                  color: AppColors.grey500, fontSize: 10)),
+              style:
+                  const TextStyle(color: AppColors.grey500, fontSize: 10)),
         ],
       ),
     );
   }
 
-  // ── Estadísticas ─────────────────────────────────────────────────────────────
+  // ── Estadísticas ──────────────────────────────────────────────────────────────
   Widget _buildStatisticsCards() {
     final colorScheme = Theme.of(context).colorScheme;
     return Row(
@@ -636,6 +604,7 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
     );
   }
 
+  // ── Acciones rápidas ──────────────────────────────────────────────────────────
   Widget _buildQuickActionsButtons() {
     final colorScheme = Theme.of(context).colorScheme;
     return Row(
@@ -719,6 +688,7 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
     );
   }
 
+  // ── Pedidos recientes ─────────────────────────────────────────────────────────
   Widget _buildRecentOrdersHeader() {
     final colorScheme = Theme.of(context).colorScheme;
     return Row(
@@ -741,7 +711,7 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
   }
 
   Widget _buildRecentOrdersList() {
-    if (_isLoadingOrders) {
+    if (_pedidosState.isLoading) {
       return Center(
         child: CircularProgressIndicator(
           color: Theme.of(context).colorScheme.primary,
@@ -749,7 +719,7 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
       );
     }
 
-    if (_recentOrders.isEmpty) {
+    if (_pedidosState.recientes.isEmpty) {
       return Center(
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 32),
@@ -766,20 +736,17 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
       );
     }
 
+    final recientes = _pedidosState.recientes;
     return Column(
       children: [
-        for (var i = 0; i < _recentOrders.length; i++)
+        for (var i = 0; i < recientes.length; i++)
           Column(
             children: [
               OrderCardWidget(
-                pedido: _recentOrders[i],
-                onTap: () => _showOrderDetails(_recentOrders[i]),
+                pedido: recientes[i],
+                onTap: () => _showOrderDetails(recientes[i]),
               ),
-              if (i < _recentOrders.length - 1)
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 16),
-                  child: Divider(height: 1, color: AppColors.grey100),
-                ),
+              if (i < recientes.length - 1) const SizedBox(height: 16),
             ],
           ),
       ],

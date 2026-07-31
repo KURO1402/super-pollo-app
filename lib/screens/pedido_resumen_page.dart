@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:super_pollo_app/services/pedidos_service.dart';
 import 'package:super_pollo_app/state/pedido_flow_state.dart';
 import 'package:super_pollo_app/widgets/pedido_stepper.dart';
+import 'package:super_pollo_app/utils/pedidos_state.dart';
 import 'package:super_pollo_app/theme/app_colors.dart';
 
 class PedidoResumenPage extends StatefulWidget {
@@ -28,14 +29,15 @@ class _PedidoResumenPageState extends State<PedidoResumenPage> {
         mesas: widget.flowState.mesas.map((m) => {'idMesa': m.idMesa}).toList(),
         productos: widget.flowState.productos,
       );
+      PedidosState().cargar();
       if (mounted) {
+        context.go('/menu_principal');
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Pedido registrado exitosamente'),
             backgroundColor: AppColors.success,
           ),
         );
-        context.go('/menu_principal');
       }
     } catch (e) {
       if (mounted) {

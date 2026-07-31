@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:super_pollo_app/services/listar_pedidos_service.dart';
 import 'package:super_pollo_app/models/listar_pedidos_model.dart';
 import 'package:super_pollo_app/widgets/pedidos_widget.dart';
+import 'package:super_pollo_app/utils/pedidos_state.dart';
 import 'package:super_pollo_app/theme/app_colors.dart';
-import 'package:super_pollo_app/screens/editar_pedido_page.dart';
 
 class GestionPedidosPage extends StatefulWidget {
   const GestionPedidosPage({super.key});
@@ -15,52 +14,28 @@ class GestionPedidosPage extends StatefulWidget {
 
 class _GestionPedidosPageState extends State<GestionPedidosPage> {
   int _selectedTab = 0;
-  bool _isLoading = false;
-  String? _errorMessage;
-  List<Pedido> _allPedidos = [];
+  final PedidosState _pedidosState = PedidosState();
 
   @override
   void initState() {
     super.initState();
-    _cargarPedidos();
+    _pedidosState.addListener(_actualizar);
+    _pedidosState.cargar();
   }
 
-  void _cargarPedidos() async {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
-    try {
-      final ahora = DateTime.now();
-      final fecha =
-          '${ahora.year}-${ahora.month.toString().padLeft(2, '0')}-${ahora.day.toString().padLeft(2, '0')}';
-      final hora =
-          '${ahora.hour.toString().padLeft(2, '0')}:${ahora.minute.toString().padLeft(2, '0')}';
-      final response =
-          await PedidosService.listarPedidos(fecha: fecha, hora: hora);
-      if (mounted) {
-        setState(() {
-          if (response.ok) {
-            _allPedidos = response.pedidos;
-          } else {
-            _errorMessage = 'Error al obtener pedidos';
-          }
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _errorMessage = e.toString().replaceFirst('Exception: ', '');
-          _isLoading = false;
-        });
-      }
-    }
+  @override
+  void dispose() {
+    _pedidosState.removeListener(_actualizar);
+    super.dispose();
   }
 
-  List<Pedido> _getPedidosFiltrados() => _selectedTab == 0
-      ? _allPedidos
-      : _allPedidos.where((p) => p.estadoPedido == 'pendiente').toList();
+  void _actualizar() => setState(() {});
+
+  List<Pedido> get _pedidosFiltrados => _selectedTab == 0
+      ? _pedidosState.pedidos
+      : _pedidosState.pedidos
+          .where((p) => p.estadoPedido == 'pendiente')
+          .toList();
 
   void _showOrderDetails(Pedido pedido) {
     showModalBottomSheet(
@@ -69,20 +44,8 @@ class _GestionPedidosPageState extends State<GestionPedidosPage> {
       backgroundColor: Colors.transparent,
       builder: (context) => OrderDetailsModal(
         pedido: pedido,
-        onEditarPedido: () => _navegarAEditar(pedido),
-        onPedidoCancelado: _cargarPedidos, // recarga la lista al cancelar
-      ),
-    );
-  }
-
-  void _navegarAEditar(Pedido pedido) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => EditarPedidoPage(
-          pedido: pedido,
-          onPedidoEditado: _cargarPedidos,
-        ),
+        onEditarPedido: () => _pedidosState.cargar(),
+        onPedidoCancelado: () => _pedidosState.cargar(),
       ),
     );
   }
@@ -91,8 +54,9 @@ class _GestionPedidosPageState extends State<GestionPedidosPage> {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final todos = _pedidosState.pedidos;
     final pendientesCount =
-        _allPedidos.where((p) => p.estadoPedido == 'pendiente').length;
+        todos.where((p) => p.estadoPedido == 'pendiente').length;
 
     return Scaffold(
       appBar: AppBar(
@@ -105,7 +69,7 @@ class _GestionPedidosPageState extends State<GestionPedidosPage> {
         actions: [
           IconButton(
             icon: Icon(Icons.refresh, color: colorScheme.primary),
-            onPressed: _cargarPedidos,
+            onPressed: () => _pedidosState.cargar(),
           ),
         ],
       ),
@@ -120,29 +84,20 @@ class _GestionPedidosPageState extends State<GestionPedidosPage> {
               // Pestañas
               Row(
                 children: [
-                  _buildOrderTab(
-                    'Todos (${_allPedidos.length})',
-                    0,
-                    colorScheme,
-                    isDark,
-                  ),
+                  _buildTab('Todos (${todos.length})', 0, colorScheme, isDark),
                   const SizedBox(width: 16),
-                  _buildOrderTab(
-                    'Pendientes ($pendientesCount)',
-                    1,
-                    colorScheme,
-                    isDark,
-                  ),
+                  _buildTab(
+                      'Pendientes ($pendientesCount)', 1, colorScheme, isDark),
                 ],
               ),
 
               const SizedBox(height: 24),
 
               OrderListWidget(
-                pedidos: _getPedidosFiltrados(),
-                isLoading: _isLoading,
-                errorMessage: _errorMessage,
-                onOrderTap: _showOrderDetails, // sin cambios
+                pedidos: _pedidosFiltrados,
+                isLoading: _pedidosState.isLoading,
+                errorMessage: _pedidosState.error,
+                onOrderTap: _showOrderDetails,
               ),
             ],
           ),
@@ -151,7 +106,7 @@ class _GestionPedidosPageState extends State<GestionPedidosPage> {
     );
   }
 
-  Widget _buildOrderTab(
+  Widget _buildTab(
       String text, int index, ColorScheme colorScheme, bool isDark) {
     final isSelected = _selectedTab == index;
     return Expanded(

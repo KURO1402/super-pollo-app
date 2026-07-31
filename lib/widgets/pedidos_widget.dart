@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:super_pollo_app/models/listar_pedidos_model.dart';
 import 'package:super_pollo_app/services/cancelar_pedido_service.dart';
 import 'package:super_pollo_app/theme/app_colors.dart';
+import 'package:super_pollo_app/utils/pedidos_state.dart';
 
 // ── OrderCardWidget ───────────────────────────────────────────────────────────
 class OrderCardWidget extends StatelessWidget {

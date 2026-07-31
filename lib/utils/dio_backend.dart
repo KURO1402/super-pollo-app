@@ -3,7 +3,7 @@ import 'package:super_pollo_app/utils/token_storage.dart';
 import 'package:super_pollo_app/main.dart';
 import 'package:go_router/go_router.dart';
 
-const String _baseUrl = 'https://superpollohyo.com/api';
+const String _baseUrl = 'http://localhost:3001/api';
 const String _apiKey = String.fromEnvironment(
   'API_KEY',
   defaultValue: 'superpollo_movil_k3y_2026_xZ9mQ',
