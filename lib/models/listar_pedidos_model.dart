@@ -83,7 +83,7 @@ class Pedido {
 
       return Pedido(
         idPedido: json['id_pedido'] ?? 0,
-        estadoPedido: json['estado_pedido'] ?? 'disponible',
+        estadoPedido: json['estado_pedido'] ?? 'pendiente',
         precioPrecuenta: json['precio_precuenta']?.toString() ?? '0.00',
         mesas: mesasList,
         tiempoDesdeActualizacion: json['tiempo_desde_actualizacion'] ?? '',
@@ -93,7 +93,7 @@ class Pedido {
       print('Error parsing Pedido: $e');
       return Pedido(
         idPedido: 0,
-        estadoPedido: 'disponible',
+        estadoPedido: 'pendiente',
         precioPrecuenta: '0.00',
         mesas: [],
         tiempoDesdeActualizacion: '',
@@ -106,8 +106,8 @@ class Pedido {
 
   int get totalItems => detalles.fold(0, (sum, d) => sum + d.cantidadPedido);
 
-  // Solo se puede editar o cancelar si está disponible
-  bool get puedeEditarse => estadoPedido == 'pendiente' || estadoPedido == 'disponible';
+  // Solo se puede editar o cancelar si está pendiente
+  bool get puedeEditarse => estadoPedido == 'pendiente';
 
   Color get colorEstado {
     switch (estadoPedido) {
@@ -116,7 +116,6 @@ class Pedido {
       case 'cancelado':
         return Colors.red;
       case 'pendiente':
-      case 'disponible':
       default:
         return Colors.orange;
     }
@@ -129,10 +128,8 @@ class Pedido {
       case 'cancelado':
         return 'Cancelado';
       case 'pendiente':
-        return 'Pendiente';
-      case 'disponible':
       default:
-        return 'Disponible';
+        return 'Pendiente';
     }
   }
 }

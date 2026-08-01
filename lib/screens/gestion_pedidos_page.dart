@@ -44,7 +44,7 @@ class _GestionPedidosPageState extends State<GestionPedidosPage> {
       backgroundColor: Colors.transparent,
       builder: (context) => OrderDetailsModal(
         pedido: pedido,
-        onEditarPedido: () => _pedidosState.cargar(),
+        onEditarPedido: () => context.push('/editar_pedido', extra: pedido),
         onPedidoCancelado: () => _pedidosState.cargar(),
       ),
     );

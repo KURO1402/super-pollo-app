@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:super_pollo_app/models/listar_pedidos_model.dart';
 import 'package:super_pollo_app/screens/configuracion_page.dart';
+import 'package:super_pollo_app/screens/editar_pedido_page.dart';
 import 'package:super_pollo_app/screens/gestion_mesas_page.dart';
 import 'package:super_pollo_app/screens/gestion_pedidos_page.dart';
 import 'package:super_pollo_app/screens/inicio_sesion_page.dart';
@@ -11,6 +13,7 @@ import 'package:super_pollo_app/screens/pedido_mesas_page.dart';
 import 'package:super_pollo_app/screens/pedido_resumen_page.dart';
 import 'package:super_pollo_app/state/pedido_flow_state.dart';
 import 'package:super_pollo_app/utils/notificaciones_state.dart';
+import 'package:super_pollo_app/utils/pedidos_state.dart';
 import 'package:super_pollo_app/utils/token_storage.dart';
 import 'package:super_pollo_app/theme/app_theme.dart';
 import 'package:super_pollo_app/theme/theme_provider.dart';
@@ -71,6 +74,16 @@ final GoRouter router = GoRouter(
       path: '/gestion_pedidos',
       builder: (BuildContext context, GoRouterState state) =>
           const GestionPedidosPage(),
+    ),
+    GoRoute(
+      path: '/editar_pedido',
+      builder: (BuildContext context, GoRouterState state) {
+        final pedido = state.extra as Pedido;
+        return EditarPedidoPage(
+          pedido: pedido,
+          onPedidoEditado: () => PedidosState().cargar(),
+        );
+      },
     ),
     GoRoute(
       path: '/notificaciones',
