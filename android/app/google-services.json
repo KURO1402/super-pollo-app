@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "210551448523",
+    "project_id": "super-pollo-app-notification",
+    "storage_bucket": "super-pollo-app-notification.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:210551448523:android:f4ed1ba5d76afdf03c8c4e",
+        "android_client_info": {
+          "package_name": "com.example.super_pollo_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDvPMiYdbLXkAe60M8g2Aqgvoi9-GbeCNw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

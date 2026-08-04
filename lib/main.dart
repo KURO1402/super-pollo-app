@@ -17,13 +17,14 @@ import 'package:super_pollo_app/utils/pedidos_state.dart';
 import 'package:super_pollo_app/utils/token_storage.dart';
 import 'package:super_pollo_app/theme/app_theme.dart';
 import 'package:super_pollo_app/theme/theme_provider.dart';
+import 'package:pusher_beams/pusher_beams.dart';
 
 final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey =
     GlobalKey<ScaffoldMessengerState>();
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
-final GoRouter router = GoRouter(
+final GoRouter router = GoRouter( 
   navigatorKey: navigatorKey,
   redirect: (context, state) async {
     final haySesion = await TokenStorage.haySession();
@@ -102,6 +103,7 @@ final themeProvider = ThemeProvider();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await PusherBeams.instance.start('9a4bce4e-6ac6-450b-9928-29fa04dece9b');
   await NotificacionesState().init();
   await themeProvider.loadSavedTheme();
   runApp(const MyApp());

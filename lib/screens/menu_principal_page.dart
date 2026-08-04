@@ -6,6 +6,8 @@ import 'package:super_pollo_app/utils/pedidos_state.dart';
 import 'package:super_pollo_app/widgets/pedidos_widget.dart';
 import 'package:super_pollo_app/theme/app_colors.dart';
 import '../utils/token_storage.dart';
+import 'package:pusher_beams/pusher_beams.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class MenuPrincipalPage extends StatefulWidget {
   const MenuPrincipalPage({super.key});
@@ -26,6 +28,7 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
     _notifState.addListener(_actualizar);
     _pedidosState.addListener(_actualizar);
     _pedidosState.cargar();
+    _suscribirNotificacionesPush();
   }
 
   @override
@@ -53,7 +56,26 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
     }
   }
 
+  Future<void> _suscribirNotificacionesPush() async {
+    final status = await Permission.notification.request();
+    if (!status.isGranted) {
+      print('Permiso de notificaciones no concedido');
+      return;
+    }
+
+    try {
+      await PusherBeams.instance.addDeviceInterest('pedidos');
+    } catch (e) {
+      print('Error al suscribir notificaciones push: $e');
+    }
+  }
+
   Future<void> _logout() async {
+    try {
+      await PusherBeams.instance.removeDeviceInterest('pedidos');
+    } catch (e) {
+      print('Error al desuscribir notificaciones push: $e');
+    }
     await TokenStorage.clearTokens();
     if (!mounted) return;
     context.go("/");
