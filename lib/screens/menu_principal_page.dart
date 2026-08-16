@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:super_pollo_app/models/listar_pedidos_model.dart';
 import 'package:super_pollo_app/utils/notificaciones_state.dart';
 import 'package:super_pollo_app/utils/pedidos_state.dart';
+import 'package:super_pollo_app/state/estadisticas_state.dart';
 import 'package:super_pollo_app/widgets/pedidos_widget.dart';
 import 'package:super_pollo_app/theme/app_colors.dart';
 import '../utils/token_storage.dart';
@@ -21,20 +23,31 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
   String apellido = "";
   final PedidosState _pedidosState = PedidosState();
   final NotificacionesState _notifState = NotificacionesState();
+  final EstadisticasState _estadisticasState = EstadisticasState();
+  Timer? _timerEstadisticas;
 
   @override
   void initState() {
     super.initState();
     _notifState.addListener(_actualizar);
     _pedidosState.addListener(_actualizar);
+    _estadisticasState.addListener(_actualizar);
     _pedidosState.cargar();
+    _estadisticasState.cargar();
     _suscribirNotificacionesPush();
+
+    // Refresca las estadísticas cada 30 segundos mientras la pantalla esté activa
+    _timerEstadisticas = Timer.periodic(const Duration(seconds: 30), (_) {
+      _estadisticasState.cargar();
+    });
   }
 
   @override
   void dispose() {
     _notifState.removeListener(_actualizar);
     _pedidosState.removeListener(_actualizar);
+    _estadisticasState.removeListener(_actualizar);
+    _timerEstadisticas?.cancel();
     super.dispose();
   }
 
@@ -100,23 +113,32 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildHeaderWithMenuAndUser(),
-              const SizedBox(height: 24),
-              _buildStatisticsCards(),
-              const SizedBox(height: 24),
-              _buildSectionTitle('Acciones Rápidas'),
-              const SizedBox(height: 16),
-              _buildQuickActionsButtons(),
-              const SizedBox(height: 32),
-              _buildRecentOrdersHeader(),
-              const SizedBox(height: 16),
-              _buildRecentOrdersList(),
-            ],
+        child: RefreshIndicator(
+          onRefresh: () async {
+            await Future.wait([
+              _pedidosState.cargar(),
+              _estadisticasState.cargar(),
+            ]);
+          },
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildHeaderWithMenuAndUser(),
+                const SizedBox(height: 24),
+                _buildStatisticsCards(),
+                const SizedBox(height: 24),
+                _buildSectionTitle('Acciones Rápidas'),
+                const SizedBox(height: 16),
+                _buildQuickActionsButtons(),
+                const SizedBox(height: 32),
+                _buildRecentOrdersHeader(),
+                const SizedBox(height: 16),
+                _buildRecentOrdersList(),
+              ],
+            ),
           ),
         ),
       ),
@@ -512,6 +534,9 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
   // ── Estadísticas ──────────────────────────────────────────────────────────────
   Widget _buildStatisticsCards() {
     final colorScheme = Theme.of(context).colorScheme;
+    final mesas = _estadisticasState.mesasActivas;
+    final ventas = _estadisticasState.ventasHoy;
+
     return Row(
       children: [
         Expanded(
@@ -519,8 +544,8 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
             icon: Icons.table_restaurant,
             iconColor: AppColors.success,
             label: 'Mesas Activas',
-            value: '8',
-            trend: '+2',
+            value: mesas != null ? '${mesas.mesasActivas}' : '--',
+            trend: mesas != null ? '${mesas.porcentajeOcupacion}%' : null,
           ),
         ),
         const SizedBox(width: 16),
@@ -529,8 +554,13 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
             icon: Icons.attach_money,
             iconColor: colorScheme.primary,
             label: 'Ventas Hoy',
-            value: 'S/ 1,240',
-            trend: '+15%',
+            value: ventas != null
+                ? 'S/ ${ventas.montoVentasHoy.toStringAsFixed(0)}'
+                : 'S/ --',
+            trend: ventas != null
+                ? '${ventas.esPositivo ? '+' : ''}${ventas.porcentajeVariacion.toStringAsFixed(0)}%'
+                : null,
+            trendPositivo: ventas?.esPositivo ?? true,
           ),
         ),
       ],
@@ -543,9 +573,11 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
     required String label,
     required String value,
     String? trend,
+    bool trendPositivo = true,
   }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final cardColor = isDark ? AppColors.navyCard : Colors.white;
+    final trendColor = trendPositivo ? AppColors.success : AppColors.error;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -579,19 +611,24 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
                   padding: const EdgeInsets.symmetric(
                       horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: AppColors.success.withOpacity(0.12),
+                    color: trendColor.withOpacity(0.12),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.trending_up,
-                          color: AppColors.success, size: 14),
+                      Icon(
+                        trendPositivo
+                            ? Icons.trending_up
+                            : Icons.trending_down,
+                        color: trendColor,
+                        size: 14,
+                      ),
                       const SizedBox(width: 2),
                       Text(trend,
-                          style: const TextStyle(
+                          style: TextStyle(
                               fontSize: 12,
-                              color: AppColors.success,
+                              color: trendColor,
                               fontWeight: FontWeight.w500)),
                     ],
                   ),
