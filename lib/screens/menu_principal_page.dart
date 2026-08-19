@@ -555,7 +555,7 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
             iconColor: colorScheme.primary,
             label: 'Ventas Hoy',
             value: ventas != null
-                ? 'S/ ${ventas.montoVentasHoy.toStringAsFixed(0)}'
+                ? 'S/ ${ventas.montoVentasHoy.toStringAsFixed(2)}'
                 : 'S/ --',
             trend: ventas != null
                 ? '${ventas.esPositivo ? '+' : ''}${ventas.porcentajeVariacion.toStringAsFixed(0)}%'

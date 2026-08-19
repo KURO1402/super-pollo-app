@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:super_pollo_app/models/mesas_model.dart';
 import 'package:super_pollo_app/models/mesas_response_model.dart';
+import 'package:super_pollo_app/models/pedido_mesa_model.dart';
 import 'package:super_pollo_app/services/mesas_service.dart';
+import 'package:super_pollo_app/services/pedidos_mesa_service.dart';
 import 'package:super_pollo_app/theme/app_colors.dart';
 
 class GestionMesasPage extends StatefulWidget {
@@ -14,6 +16,7 @@ class GestionMesasPage extends StatefulWidget {
 
 class _GestionMesasPageState extends State<GestionMesasPage> {
   final MesasService _mesasService = MesasService();
+  final PedidosMesaService _pedidosMesaService = PedidosMesaService();
 
   int _selectedFilter = 0;
   List<MesaModel> _mesas = [];
@@ -101,11 +104,14 @@ class _GestionMesasPageState extends State<GestionMesasPage> {
   }
 
   void _showTableDetails(MesaModel mesa) {
+    final Future<PedidoMesaModel?> pedidoFuture =
+        _pedidosMesaService.getPedidoPorMesa(mesa.idMesa);
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => _buildTableDetailsModal(mesa),
+      builder: (context) => _buildTableDetailsModal(mesa, pedidoFuture),
     );
   }
 
@@ -154,7 +160,8 @@ class _GestionMesasPageState extends State<GestionMesasPage> {
                 const Spacer(),
                 IconButton(
                   onPressed: _cargarMesas,
-                  icon: Icon(Icons.refresh_rounded, color: colorScheme.primary),
+                  icon:
+                      Icon(Icons.refresh_rounded, color: colorScheme.primary),
                 ),
               ],
             ),
@@ -190,7 +197,8 @@ class _GestionMesasPageState extends State<GestionMesasPage> {
                                   size: 48, color: AppColors.grey300),
                               const SizedBox(height: 12),
                               Text(_error!,
-                                  style: Theme.of(context).textTheme.bodySmall),
+                                  style:
+                                      Theme.of(context).textTheme.bodySmall),
                               const SizedBox(height: 16),
                               TextButton.icon(
                                 onPressed: _cargarMesas,
@@ -256,8 +264,9 @@ class _GestionMesasPageState extends State<GestionMesasPage> {
     final borderColor = unavailable
         ? config.color.withOpacity(0.4)
         : (isDark ? AppColors.navyLight : AppColors.grey100);
-    final iconColor =
-        unavailable ? config.color : (isDark ? AppColors.grey300 : AppColors.grey700);
+    final iconColor = unavailable
+        ? config.color
+        : (isDark ? AppColors.grey300 : AppColors.grey700);
     final stateBg = isDark ? config.bgColorDark : config.bgColor;
 
     return GestureDetector(
@@ -267,8 +276,8 @@ class _GestionMesasPageState extends State<GestionMesasPage> {
         decoration: BoxDecoration(
           color: cardColor,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-              color: borderColor, width: unavailable ? 1.5 : 1),
+          border:
+              Border.all(color: borderColor, width: unavailable ? 1.5 : 1),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(isDark ? 0.2 : 0.04),
@@ -383,7 +392,10 @@ class _GestionMesasPageState extends State<GestionMesasPage> {
   }
 
   // ── Modal de detalles ────────────────────────────────────────────────────────
-  Widget _buildTableDetailsModal(MesaModel mesa) {
+  Widget _buildTableDetailsModal(
+    MesaModel mesa,
+    Future<PedidoMesaModel?> pedidoFuture,
+  ) {
     final config = _getEstadoConfig(mesa);
 
     return DraggableScrollableSheet(
@@ -499,58 +511,131 @@ class _GestionMesasPageState extends State<GestionMesasPage> {
 
                   const SizedBox(height: 20),
 
-                  // Pedidos
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: cardBg,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: sectionBorderColor),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Pedidos (3)',
-                          style: Theme.of(context)
-                              .textTheme
-                              .titleMedium
-                              ?.copyWith(fontSize: 16),
+                  // Pedido (real, obtenido desde el backend)
+                  FutureBuilder<PedidoMesaModel?>(
+                    future: pedidoFuture,
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState ==
+                          ConnectionState.waiting) {
+                        return Container(
+                          padding: const EdgeInsets.all(24),
+                          decoration: BoxDecoration(
+                            color: cardBg,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: sectionBorderColor),
+                          ),
+                          child: Center(
+                            child: CircularProgressIndicator(
+                              color: colorScheme.primary,
+                            ),
+                          ),
+                        );
+                      }
+
+                      if (snapshot.hasError) {
+                        return Container(
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            color: cardBg,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: sectionBorderColor),
+                          ),
+                          child: Column(
+                            children: [
+                              const Icon(Icons.wifi_off_rounded,
+                                  size: 32, color: AppColors.grey300),
+                              const SizedBox(height: 8),
+                              Text(
+                                'No se pudo cargar el pedido',
+                                style: Theme.of(context).textTheme.bodySmall,
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+
+                      final pedido = snapshot.data;
+
+                      if (pedido == null) {
+                        return Container(
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            color: cardBg,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: sectionBorderColor),
+                          ),
+                          child: Column(
+                            children: [
+                              const Icon(Icons.receipt_long_outlined,
+                                  size: 32, color: AppColors.grey300),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Sin pedidos activos',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodyMedium
+                                    ?.copyWith(fontWeight: FontWeight.w600),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+
+                      return Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: cardBg,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: sectionBorderColor),
                         ),
-                        const SizedBox(height: 12),
-                        _buildOrderItem(context, '1x 1/4 de Pollo a la Brasa',
-                            'S/ 14.00', itemBg),
-                        const SizedBox(height: 8),
-                        _buildOrderItem(context,
-                            '2x Gaseosa Inka Kola Personal', 'S/ 4.00', itemBg),
-                        const SizedBox(height: 8),
-                        _buildOrderItem(
-                            context, '1x Ensalada Mixta', 'S/ 8.00', itemBg),
-                        const SizedBox(height: 16),
-                        Divider(height: 1, color: sectionBorderColor),
-                        const SizedBox(height: 12),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Total',
+                              'Pedidos (${pedido.detalles.length})',
                               style: Theme.of(context)
                                   .textTheme
                                   .titleMedium
                                   ?.copyWith(fontSize: 16),
                             ),
-                            Text(
-                              'S/ 26.00',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: colorScheme.primary,
+                            const SizedBox(height: 12),
+                            for (int i = 0; i < pedido.detalles.length; i++) ...[
+                              if (i > 0) const SizedBox(height: 8),
+                              _buildOrderItem(
+                                context,
+                                '${pedido.detalles[i].cantidadPedido}x ${pedido.detalles[i].nombreProducto}',
+                                itemBg,
                               ),
+                            ],
+                            const SizedBox(height: 16),
+                            Divider(height: 1, color: sectionBorderColor),
+                            const SizedBox(height: 12),
+                            Row(
+                              mainAxisAlignment:
+                                  MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  'Total',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .titleMedium
+                                      ?.copyWith(fontSize: 16),
+                                ),
+                                Text(
+                                  'S/ ${pedido.precioPrecuenta.toStringAsFixed(2)}',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: colorScheme.primary,
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                         ),
-                      ],
-                    ),
+                      );
+                    },
                   ),
 
                   const SizedBox(height: 24),
@@ -584,36 +669,6 @@ class _GestionMesasPageState extends State<GestionMesasPage> {
                         ),
                       ),
                       const SizedBox(width: 12),
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: () => Navigator.pop(context),
-                          child: Container(
-                            height: 50,
-                            decoration: BoxDecoration(
-                              color: colorScheme.primary,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: const Center(
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(Icons.add,
-                                      color: Colors.white, size: 20),
-                                  SizedBox(width: 8),
-                                  Text(
-                                    'Agregar',
-                                    style: TextStyle(
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
                     ],
                   ),
                   const SizedBox(height: 20),
@@ -627,7 +682,7 @@ class _GestionMesasPageState extends State<GestionMesasPage> {
   }
 
   Widget _buildOrderItem(
-      BuildContext context, String itemName, String price, Color bgColor) {
+      BuildContext context, String itemName, Color bgColor) {
     return Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
@@ -635,7 +690,6 @@ class _GestionMesasPageState extends State<GestionMesasPage> {
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Expanded(
             child: Text(
@@ -647,13 +701,6 @@ class _GestionMesasPageState extends State<GestionMesasPage> {
               overflow: TextOverflow.ellipsis,
             ),
           ),
-          Text(
-            price,
-            style: Theme.of(context)
-                .textTheme
-                .bodyMedium
-                ?.copyWith(fontWeight: FontWeight.bold, fontSize: 14),
-          ),
         ],
       ),
     );
@@ -664,7 +711,7 @@ class _GestionMesasPageState extends State<GestionMesasPage> {
 class _EstadoConfig {
   final String label;
   final Color color;
-  final Color bgColor;     // fondo en light mode
+  final Color bgColor; // fondo en light mode
   final Color bgColorDark; // fondo en dark mode
   final IconData icon;
 

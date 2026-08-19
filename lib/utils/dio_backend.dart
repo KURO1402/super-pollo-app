@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:super_pollo_app/utils/token_storage.dart';
 import 'package:super_pollo_app/main.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter/foundation.dart';
 
 const String _baseUrl = 'https://superpollohyo.com/api';
 const String _apiKey = String.fromEnvironment(
@@ -27,6 +28,16 @@ class DioClient {
         headers: {'Content-Type': 'application/json', 'x-api-key': _apiKey},
       ),
     );
+    
+    if (kDebugMode) {
+      dio.interceptors.add(
+        LogInterceptor(
+          requestBody: true,
+          responseBody: true,
+          requestHeader: true,
+        ),
+      );
+    }
 
     dio.interceptors.add(
       InterceptorsWrapper(
