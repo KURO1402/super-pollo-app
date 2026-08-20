@@ -90,6 +90,11 @@ class _InputFieldState extends State<_InputField> {
 
   @override
   Widget build(BuildContext context) {
+    // Solo el texto que el usuario escribe se adapta al tema.
+    final inputTextColor = Theme.of(context).brightness == Brightness.dark
+        ? Colors.white
+        : Colors.black87;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -108,7 +113,7 @@ class _InputFieldState extends State<_InputField> {
               controller: widget.controller,
               keyboardType: widget.keyboardType,
               obscureText: widget.isPassword ? _obscure : false,
-              style: const TextStyle(color: Colors.white),
+              style: TextStyle(color: inputTextColor),
               decoration: InputDecoration(
                 hintText: widget.hint,
                 hintStyle: TextStyle(color: Colors.white.withOpacity(0.3)),
